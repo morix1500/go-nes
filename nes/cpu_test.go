@@ -181,7 +181,7 @@ func TestCPUInterpretLDAFromMemory(t *testing.T) {
 }
 
 // ADCのテストコードを生成する
-func TestCPUInterpretADC(t *testing.T) {
+func TestCPUADC(t *testing.T) {
 	cases := []struct {
 		name            string
 		program         []uint8
@@ -207,6 +207,40 @@ func TestCPUInterpretADC(t *testing.T) {
 			expectStatus:    0b1100_0000,
 		},
 	}
+	for _, tt := range cases {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			cpu := NewCPU()
+			cpu.LoadAndRun(tt.program)
+			assert.Equal(t, tt.expectRegisterA, cpu.registerA)
+			assert.Equal(t, tt.expectStatus, cpu.status)
+		})
+	}
+}
+
+// ANDのテストコードを生成する
+func TestCPUAND(t *testing.T) {
+	cases := []struct {
+		name            string
+		program         []uint8
+		expectRegisterA uint8
+		expectStatus    uint8
+	}{
+		{
+			name:            "AND Immediate",
+			program:         []uint8{0xa9, 0x05, 0x29, 0x04, 0x00},
+			expectRegisterA: uint8(0x04),
+			expectStatus:    0b0000_0000,
+		},
+		{
+			name:            "AND Immediate with negative",
+			program:         []uint8{0xa9, 0xff, 0x29, 0x80, 0x00},
+			expectRegisterA: uint8(0x80),
+			expectStatus:    0b1000_0000,
+		},
+	}
+
 	for _, tt := range cases {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {

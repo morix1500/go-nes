@@ -100,6 +100,18 @@ func (c *CPU) adc(mode AddressingMode) error {
 	return nil
 }
 
+func (c *CPU) and(mode AddressingMode) error {
+	addr, err := c.getOperandAddress(mode)
+	if err != nil {
+		return err
+	}
+
+	c.registerA &= c.readMemory(addr)
+	c.updateZeroAndNegativeFlags(c.registerA)
+
+	return nil
+}
+
 func (c *CPU) tax() {
 	c.registerX = c.registerA
 	c.updateZeroAndNegativeFlags(c.registerX)
@@ -191,6 +203,10 @@ func (c *CPU) Run() error {
 			}
 		case "ADC":
 			if err := c.adc(opsInfo.Mode); err != nil {
+				return err
+			}
+		case "AND":
+			if err := c.and(opsInfo.Mode); err != nil {
 				return err
 			}
 		default:
