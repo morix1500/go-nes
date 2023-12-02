@@ -17,6 +17,17 @@ const (
 	NoneAddressing
 )
 
+const (
+	CPU_FLAG_CARRY             uint8 = 0b0000_0001
+	CPU_FLAG_ZERO              uint8 = 0b0000_0010
+	CPU_FLAG_INTERRUPT_DISABLE uint8 = 0b0000_0100
+	CPU_FLAG_DECIMAL_MODE      uint8 = 0b0000_1000
+	CPU_FLAG_BREAK             uint8 = 0b0001_0000
+	CPU_FLAG_BREAK2            uint8 = 0b0010_0000
+	CPU_FLAG_OVERFLOW          uint8 = 0b0100_0000
+	CPU_FLAG_NEGATIVE          uint8 = 0b1000_0000
+)
+
 type CPU struct {
 	registerA      uint8
 	registerX      uint8
@@ -58,6 +69,37 @@ func (c *CPU) sta(mode AddressingMode) error {
 	return nil
 }
 
+func (c *CPU) adc(mode AddressingMode) error {
+	addr, err := c.getOperandAddress(mode)
+	if err != nil {
+		return err
+	}
+
+	// Aレジスタの値とメモリの値、そしてキャリーフラグの値（0または1）を加えます。
+	tmpValue := uint16(c.registerA) + uint16(c.readMemory(addr)) + uint16(c.status&CPU_FLAG_CARRY)
+
+	// 加算の結果が255を超える場合、キャリーフラグをセットします。それ以外の場合はキャリーフラグをクリアします。
+	if tmpValue&0x100 != 0 {
+		tmpValue -= (0xff + 1)
+		c.status |= CPU_FLAG_CARRY
+	} else {
+		c.status &= ^CPU_FLAG_CARRY
+	}
+
+	// 加算の結果をAレジスタに格納します。結果が256以上の場合、結果から256を引いた値がAレジスタに格納されます
+	c.registerA = uint8(tmpValue & 0xff)
+	c.updateZeroAndNegativeFlags(c.registerA)
+
+	// 結果がオーバーフロー（符号付き加算において結果が-128から127の範囲を超える）した場合、オーバーフローフラグをセットします。それ以外の場合はオーバーフローフラグをクリアします。
+	if tmpValue > 0x7f {
+		c.status |= CPU_FLAG_OVERFLOW
+	} else {
+		c.status &= ^CPU_FLAG_OVERFLOW
+	}
+
+	return nil
+}
+
 func (c *CPU) tax() {
 	c.registerX = c.registerA
 	c.updateZeroAndNegativeFlags(c.registerX)
@@ -70,15 +112,15 @@ func (c *CPU) inx() {
 
 func (c *CPU) updateZeroAndNegativeFlags(result uint8) {
 	if result == 0 {
-		c.status |= 0b0000_0010
+		c.status |= CPU_FLAG_ZERO
 	} else {
-		c.status &= 0b1111_1101
+		c.status &= ^CPU_FLAG_ZERO
 	}
 
-	if result&0b1000_0000 != 0 {
-		c.status |= 0b1000_0000
+	if result&CPU_FLAG_NEGATIVE != 0 {
+		c.status |= CPU_FLAG_NEGATIVE
 	} else {
-		c.status &= 0b0111_1111
+		c.status &= ^CPU_FLAG_NEGATIVE
 	}
 }
 
@@ -145,6 +187,10 @@ func (c *CPU) Run() error {
 			}
 		case "STA":
 			if err := c.sta(opsInfo.Mode); err != nil {
+				return err
+			}
+		case "ADC":
+			if err := c.adc(opsInfo.Mode); err != nil {
 				return err
 			}
 		default:

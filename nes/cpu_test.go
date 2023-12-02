@@ -179,3 +179,42 @@ func TestCPUInterpretLDAFromMemory(t *testing.T) {
 	cpu.LoadAndRun([]uint8{0xa5, 0x10, 0x00})
 	assert.Equal(t, uint8(0x55), cpu.registerA)
 }
+
+// ADCのテストコードを生成する
+func TestCPUInterpretADC(t *testing.T) {
+	cases := []struct {
+		name            string
+		program         []uint8
+		expectRegisterA uint8
+		expectStatus    uint8
+	}{
+		{
+			name:            "ADC Immediate",
+			program:         []uint8{0xa9, 0x05, 0x69, 0x05, 0x00},
+			expectRegisterA: uint8(0x0a),
+			expectStatus:    0b0000_0000,
+		},
+		{
+			name:            "ADC Immediate with carry",
+			program:         []uint8{0xa9, 0xff, 0x69, 0x02, 0x00},
+			expectRegisterA: uint8(0x01),
+			expectStatus:    0b0000_0001,
+		},
+		{
+			name:            "ADC Immediate with overflow",
+			program:         []uint8{0xa9, 0x7f, 0x69, 0x01, 0x00},
+			expectRegisterA: uint8(0x80),
+			expectStatus:    0b1100_0000,
+		},
+	}
+	for _, tt := range cases {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			cpu := NewCPU()
+			cpu.LoadAndRun(tt.program)
+			assert.Equal(t, tt.expectRegisterA, cpu.registerA)
+			assert.Equal(t, tt.expectStatus, cpu.status)
+		})
+	}
+}

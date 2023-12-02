@@ -13,6 +13,15 @@ var CPU_OPS_CODES map[uint8]OpeCode = map[uint8]OpeCode{
 	0xaa: {Mnemonic: "TAX", Length: 1, Cycles: 2, Mode: NoneAddressing},
 	0xe8: {Mnemonic: "INX", Length: 1, Cycles: 2, Mode: NoneAddressing},
 
+	0x69: {Mnemonic: "ADC", Length: 2, Cycles: 2, Mode: Immediate},
+	0x65: {Mnemonic: "ADC", Length: 2, Cycles: 3, Mode: ZeroPage},
+	0x75: {Mnemonic: "ADC", Length: 2, Cycles: 4, Mode: ZeroPageX},
+	0x6d: {Mnemonic: "ADC", Length: 3, Cycles: 4, Mode: Absolute},
+	0x7d: {Mnemonic: "ADC", Length: 3, Cycles: 4 /* +1 if page crossed*/, Mode: AbsoluteX},
+	0x79: {Mnemonic: "ADC", Length: 3, Cycles: 4 /* +1 if page crossed*/, Mode: AbsoluteY},
+	0x61: {Mnemonic: "ADC", Length: 2, Cycles: 6, Mode: IndirectX},
+	0x71: {Mnemonic: "ADC", Length: 2, Cycles: 5 /* +1 if page crossed*/, Mode: IndirectY},
+
 	0xa9: {Mnemonic: "LDA", Length: 2, Cycles: 2, Mode: Immediate},
 	0xa5: {Mnemonic: "LDA", Length: 2, Cycles: 3, Mode: ZeroPage},
 	0xb5: {Mnemonic: "LDA", Length: 2, Cycles: 4, Mode: ZeroPageX},
