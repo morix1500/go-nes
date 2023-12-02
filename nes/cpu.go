@@ -54,8 +54,7 @@ func (c *CPU) lda(mode AddressingMode) error {
 		return err
 	}
 	value := c.readMemory(addr)
-	c.registerA = value
-	c.updateZeroAndNegativeFlags(c.registerA)
+	c.setRegisterA(value)
 
 	return nil
 }
@@ -88,8 +87,7 @@ func (c *CPU) adc(mode AddressingMode) error {
 	}
 
 	// 加算の結果をAレジスタに格納します。結果が256以上の場合、結果から256を引いた値がAレジスタに格納されます
-	c.registerA = uint8(tmpValue & 0xff)
-	c.updateZeroAndNegativeFlags(c.registerA)
+	c.setRegisterA(uint8(tmpValue & 0xff))
 
 	// 結果がオーバーフロー（符号付き加算において結果が-128から127の範囲を超える）した場合、オーバーフローフラグをセットします。それ以外の場合はオーバーフローフラグをクリアします。
 	if tmpValue > 0x7f {
@@ -107,8 +105,7 @@ func (c *CPU) and(mode AddressingMode) error {
 		return err
 	}
 
-	c.registerA &= c.readMemory(addr)
-	c.updateZeroAndNegativeFlags(c.registerA)
+	c.setRegisterA(c.registerA & c.readMemory(addr))
 
 	return nil
 }
@@ -120,8 +117,7 @@ func (c *CPU) asl(mode AddressingMode) error {
 		} else {
 			c.status &= ^CPU_FLAG_CARRY
 		}
-		c.registerA <<= 1
-		c.updateZeroAndNegativeFlags(c.registerA)
+		c.setRegisterA(c.registerA << 1)
 		return nil
 	}
 
@@ -186,6 +182,11 @@ func (c *CPU) writeMemory16(address uint16, value uint16) {
 	lo := uint8(value & 0xff)
 	c.writeMemory(address, lo)
 	c.writeMemory(address+1, hi)
+}
+
+func (c *CPU) setRegisterA(value uint8) {
+	c.registerA = value
+	c.updateZeroAndNegativeFlags(c.registerA)
 }
 
 func (c *CPU) LoadAndRun(program []uint8) error {
