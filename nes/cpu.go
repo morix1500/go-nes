@@ -5,16 +5,16 @@ import "fmt"
 type AddressingMode uint8
 
 const (
-	Immediate AddressingMode = iota
-	ZeroPage
-	ZeroPageX
-	ZeroPageY
-	Absolute
-	AbsoluteX
-	AbsoluteY
-	IndirectX
-	IndirectY
-	NoneAddressing
+	IMMEDIATE AddressingMode = iota
+	ZERO_PAGE
+	ZERO_PAGE_X
+	ZERO_PAGE_Y
+	ABSOLUTE
+	ABSOLUTE_X
+	ABSOLUTE_Y
+	INDIRECT_X
+	INDIRECT_Y
+	NONE_ADDRESSING
 )
 
 const (
@@ -202,28 +202,28 @@ func (c *CPU) Run() error {
 
 func (c *CPU) getOperandAddress(mode AddressingMode) (uint16, error) {
 	switch mode {
-	case Immediate:
+	case IMMEDIATE:
 		return c.programCounter, nil
-	case ZeroPage:
+	case ZERO_PAGE:
 		return uint16(c.readMemory(c.programCounter)), nil
-	case ZeroPageX:
+	case ZERO_PAGE_X:
 		return uint16(c.readMemory(c.programCounter) + c.registerX), nil
-	case ZeroPageY:
+	case ZERO_PAGE_Y:
 		return uint16(c.readMemory(c.programCounter) + c.registerY), nil
-	case Absolute:
+	case ABSOLUTE:
 		return c.readMemory16(c.programCounter), nil
-	case AbsoluteX:
+	case ABSOLUTE_X:
 		return c.readMemory16(c.programCounter) + uint16(c.registerX), nil
-	case AbsoluteY:
+	case ABSOLUTE_Y:
 		return c.readMemory16(c.programCounter) + uint16(c.registerY), nil
-	case IndirectX:
+	case INDIRECT_X:
 		base := c.readMemory16(c.programCounter)
 		ptr := uint8(base + uint16(c.registerX))
 		lo := c.readMemory(uint16(ptr))
 		hi := c.readMemory(uint16(ptr + 1))
 
 		return uint16(hi)<<8 | uint16(lo), nil
-	case IndirectY:
+	case INDIRECT_Y:
 		base := c.readMemory(c.programCounter)
 		lo := c.readMemory(uint16(base))
 		hi := c.readMemory(uint16(base + 1))
