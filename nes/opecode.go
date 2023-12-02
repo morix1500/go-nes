@@ -31,6 +31,12 @@ var CPU_OPS_CODES map[uint8]OpeCode = map[uint8]OpeCode{
 	0x21: {Mnemonic: "AND", Length: 2, Cycles: 6, Mode: INDIRECT_X},
 	0x31: {Mnemonic: "AND", Length: 2, Cycles: 5 /* +1 if page crossed*/, Mode: INDIRECT_Y},
 
+	0x0a: {Mnemonic: "ASL", Length: 1, Cycles: 2, Mode: ACCUMULATOR},
+	0x06: {Mnemonic: "ASL", Length: 2, Cycles: 5, Mode: ZERO_PAGE},
+	0x16: {Mnemonic: "ASL", Length: 2, Cycles: 6, Mode: ZERO_PAGE_X},
+	0x0e: {Mnemonic: "ASL", Length: 3, Cycles: 6, Mode: ABSOLUTE},
+	0x1e: {Mnemonic: "ASL", Length: 3, Cycles: 7, Mode: ABSOLUTE_X},
+
 	0xa9: {Mnemonic: "LDA", Length: 2, Cycles: 2, Mode: IMMEDIATE},
 	0xa5: {Mnemonic: "LDA", Length: 2, Cycles: 3, Mode: ZERO_PAGE},
 	0xb5: {Mnemonic: "LDA", Length: 2, Cycles: 4, Mode: ZERO_PAGE_X},

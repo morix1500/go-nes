@@ -14,6 +14,7 @@ const (
 	ABSOLUTE_Y
 	INDIRECT_X
 	INDIRECT_Y
+	ACCUMULATOR
 	NONE_ADDRESSING
 )
 
@@ -108,6 +109,36 @@ func (c *CPU) and(mode AddressingMode) error {
 
 	c.registerA &= c.readMemory(addr)
 	c.updateZeroAndNegativeFlags(c.registerA)
+
+	return nil
+}
+
+func (c *CPU) asl(mode AddressingMode) error {
+	if mode == ACCUMULATOR {
+		if c.registerA&0x80 != 0 {
+			c.status |= CPU_FLAG_CARRY
+		} else {
+			c.status &= ^CPU_FLAG_CARRY
+		}
+		c.registerA <<= 1
+		c.updateZeroAndNegativeFlags(c.registerA)
+		return nil
+	}
+
+	addr, err := c.getOperandAddress(mode)
+	if err != nil {
+		return err
+	}
+
+	value := c.readMemory(addr)
+	if value&0x80 != 0 {
+		c.status |= CPU_FLAG_CARRY
+	} else {
+		c.status &= ^CPU_FLAG_CARRY
+	}
+	value <<= 1
+	c.writeMemory(addr, value)
+	c.updateZeroAndNegativeFlags(value)
 
 	return nil
 }
@@ -209,6 +240,10 @@ func (c *CPU) Run() error {
 			if err := c.and(opsInfo.Mode); err != nil {
 				return err
 			}
+		case "ASL":
+			if err := c.asl(opsInfo.Mode); err != nil {
+				return err
+			}
 		default:
 			return fmt.Errorf("unknown code: %d", code)
 		}
@@ -247,6 +282,8 @@ func (c *CPU) getOperandAddress(mode AddressingMode) (uint16, error) {
 		deref := derefBase + uint16(c.registerY)
 
 		return deref, nil
+	case ACCUMULATOR:
+		return 0, nil
 	default:
 		return 0, fmt.Errorf("unknown addressing mode: %d", mode)
 	}
