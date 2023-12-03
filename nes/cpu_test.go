@@ -471,3 +471,32 @@ func TestCPUBIT(t *testing.T) {
 		})
 	}
 }
+
+func TestCPUBMI(t *testing.T) {
+	cases := []struct {
+		name     string
+		program  []uint8
+		expectPC uint16
+	}{
+		{
+			name:     "BMI Branch",
+			program:  []uint8{0xa9, 0xf1, 0x30, 0x02, 0x00},
+			expectPC: uint16(0x8007),
+		},
+		{
+			name:     "BMI No Branch",
+			program:  []uint8{0x30, 0x02, 0x00},
+			expectPC: uint16(0x8003),
+		},
+	}
+
+	for _, tt := range cases {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			cpu := NewCPU()
+			cpu.LoadAndRun(tt.program)
+			assert.Equal(t, tt.expectPC, cpu.programCounter)
+		})
+	}
+}
