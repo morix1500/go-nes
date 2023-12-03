@@ -143,25 +143,15 @@ func (c *CPU) asl(mode AddressingMode) error {
 
 func (c *CPU) bcc() {
 	if c.status&CPU_FLAG_CARRY == 0 {
-		v := c.readMemory(c.programCounter)
-		// オペランドは符号付き8ビットのオフセットとして解釈される
-		if v > 0x7f {
-			c.programCounter += uint16(v) - uint16(0x100)
-		} else {
-			c.programCounter += uint16(v)
-		}
+		addr, _ := c.getOperandAddress(RELATIVE)
+		c.programCounter += addr
 	}
 }
 
 func (c *CPU) bcs() {
 	if c.status&CPU_FLAG_CARRY == 1 {
-		v := c.readMemory(c.programCounter)
-		// オペランドは符号付き8ビットのオフセットとして解釈される
-		if v > 0x7f {
-			c.programCounter += uint16(v) - uint16(0x100)
-		} else {
-			c.programCounter += uint16(v)
-		}
+		addr, _ := c.getOperandAddress(RELATIVE)
+		c.programCounter += addr
 	}
 }
 
@@ -316,7 +306,12 @@ func (c *CPU) getOperandAddress(mode AddressingMode) (uint16, error) {
 	case ACCUMULATOR:
 		return 0, nil
 	case RELATIVE:
-		return 0, nil
+		// オペランドは符号付き8ビットのオフセットとして解釈される
+		address := uint16(c.readMemory(c.programCounter))
+		if address > 0x7f {
+			address = uint16(address) - uint16(0x100)
+		}
+		return address, nil
 	default:
 		return 0, fmt.Errorf("unknown addressing mode: %d", mode)
 	}
