@@ -361,3 +361,37 @@ func TestCPUBCC(t *testing.T) {
 		})
 	}
 }
+
+func TestCPUBCS(t *testing.T) {
+	cases := []struct {
+		name     string
+		program  []uint8
+		expectPC uint16
+	}{
+		{
+			name:     "BCS Branch",
+			program:  []uint8{0xa9, 0xff, 0x0a, 0xb0, 0x02, 0x00},
+			expectPC: uint16(0x8008),
+		},
+		{
+			name:     "BCS Branch with negative",
+			program:  []uint8{0xa9, 0xff, 0x0a, 0xb0, 0x80, 0x00},
+			expectPC: uint16(0x7f86),
+		},
+		{
+			name:     "BCS No Branch",
+			program:  []uint8{0xb0, 0x02, 0x00},
+			expectPC: uint16(0x8003),
+		},
+	}
+
+	for _, tt := range cases {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			cpu := NewCPU()
+			cpu.LoadAndRun(tt.program)
+			assert.Equal(t, tt.expectPC, cpu.programCounter)
+		})
+	}
+}

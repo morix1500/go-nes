@@ -153,6 +153,18 @@ func (c *CPU) bcc() {
 	}
 }
 
+func (c *CPU) bcs() {
+	if c.status&CPU_FLAG_CARRY == 1 {
+		v := c.readMemory(c.programCounter)
+		// オペランドは符号付き8ビットのオフセットとして解釈される
+		if v > 0x7f {
+			c.programCounter += uint16(v) - uint16(0x100)
+		} else {
+			c.programCounter += uint16(v)
+		}
+	}
+}
+
 func (c *CPU) tax() {
 	c.registerX = c.registerA
 	c.updateZeroAndNegativeFlags(c.registerX)
@@ -261,6 +273,8 @@ func (c *CPU) Run() error {
 			}
 		case "BCC":
 			c.bcc()
+		case "BCS":
+			c.bcs()
 		default:
 			return fmt.Errorf("unknown code: %d", code)
 		}
