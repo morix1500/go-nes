@@ -164,6 +164,13 @@ func (c *CPU) bmi() {
 	}
 }
 
+func (c *CPU) bne() {
+	if c.status&CPU_FLAG_ZERO == 0 {
+		addr := c.getOperandAddress(RELATIVE)
+		c.programCounter += addr
+	}
+}
+
 func (c *CPU) tax() {
 	c.registerX = c.registerA
 	c.updateZeroAndNegativeFlags(c.registerX)
@@ -270,6 +277,8 @@ func (c *CPU) Run() {
 			c.bit(opsInfo.Mode)
 		case "BMI":
 			c.bmi()
+		case "BNE":
+			c.bne()
 		}
 		c.programCounter += uint16(opsInfo.Length - 1)
 	}

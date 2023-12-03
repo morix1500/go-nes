@@ -45,6 +45,7 @@ var CPU_OPS_CODES map[uint8]OpeCode = map[uint8]OpeCode{
 	0x2c: {Mnemonic: "BIT", Length: 3, Cycles: 4, Mode: ABSOLUTE},
 
 	0x30: {Mnemonic: "BMI", Length: 2, Cycles: 2 /* +1 if branch succeeds, +2 if to a new page*/, Mode: RELATIVE},
+	0xd0: {Mnemonic: "BNE", Length: 2, Cycles: 2 /* +1 if branch succeeds, +2 if to a new page*/, Mode: RELATIVE},
 
 	0xa9: {Mnemonic: "LDA", Length: 2, Cycles: 2, Mode: IMMEDIATE},
 	0xa5: {Mnemonic: "LDA", Length: 2, Cycles: 3, Mode: ZERO_PAGE},
