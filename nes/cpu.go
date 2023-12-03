@@ -135,6 +135,28 @@ func (c *CPU) beq() {
 	}
 }
 
+func (c *CPU) bit(mode AddressingMode) {
+	addr := c.getOperandAddress(mode)
+	value := c.readMemory(addr)
+	if value&c.registerA == 0 {
+		c.status |= CPU_FLAG_ZERO
+	} else {
+		c.status &= ^CPU_FLAG_ZERO
+	}
+
+	if value&CPU_FLAG_NEGATIVE != 0 {
+		c.status |= CPU_FLAG_NEGATIVE
+	} else {
+		c.status &= ^CPU_FLAG_NEGATIVE
+	}
+
+	if value&CPU_FLAG_OVERFLOW != 0 {
+		c.status |= CPU_FLAG_OVERFLOW
+	} else {
+		c.status &= ^CPU_FLAG_OVERFLOW
+	}
+}
+
 func (c *CPU) tax() {
 	c.registerX = c.registerA
 	c.updateZeroAndNegativeFlags(c.registerX)
@@ -237,6 +259,8 @@ func (c *CPU) Run() {
 			c.bcs()
 		case "BEQ":
 			c.beq()
+		case "BIT":
+			c.bit(opsInfo.Mode)
 		}
 		c.programCounter += uint16(opsInfo.Length - 1)
 	}

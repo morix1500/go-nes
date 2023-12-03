@@ -424,3 +424,50 @@ func TestCPUBEQ(t *testing.T) {
 		})
 	}
 }
+
+// BITのテストコードを生成する
+func TestCPUBIT(t *testing.T) {
+	cases := []struct {
+		name         string
+		memory       map[uint16]uint8
+		program      []uint8
+		expectStatus uint8
+	}{
+		{
+			name:         "BIT ZeroPage",
+			memory:       map[uint16]uint8{0x10: 0x05},
+			program:      []uint8{0xa9, 0x05, 0x24, 0x10, 0x00},
+			expectStatus: 0b0000_0000,
+		},
+		{
+			name:         "BIT ZeroPage with zero",
+			memory:       map[uint16]uint8{0x10: 0x05},
+			program:      []uint8{0xa9, 0x0a, 0x24, 0x10, 0x00},
+			expectStatus: 0b0000_0010,
+		},
+		{
+			name:         "BIT ZeroPage with negative and overflow",
+			memory:       map[uint16]uint8{0x10: 0xff},
+			program:      []uint8{0x24, 0x10, 0x00},
+			expectStatus: 0b1100_0010,
+		},
+		{
+			name:         "BIT Absolute",
+			memory:       map[uint16]uint8{0x2010: 0xff},
+			program:      []uint8{0xa9, 0x05, 0x2c, 0x10, 0x20, 0x00},
+			expectStatus: 0b1100_0000,
+		},
+	}
+
+	for _, tt := range cases {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			cpu := NewCPU()
+			for addr, value := range tt.memory {
+				cpu.writeMemory(addr, value)
+			}
+			cpu.LoadAndRun(tt.program)
+			assert.Equal(t, tt.expectStatus, cpu.status)
+		})
+	}
+}
