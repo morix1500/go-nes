@@ -9,7 +9,6 @@ type OpeCode struct {
 }
 
 var CPU_OPS_CODES map[uint8]OpeCode = map[uint8]OpeCode{
-	0x00: {Mnemonic: "BRK", Length: 1, Cycles: 7, Mode: NONE_ADDRESSING},
 	0xaa: {Mnemonic: "TAX", Length: 1, Cycles: 2, Mode: NONE_ADDRESSING},
 	0xe8: {Mnemonic: "INX", Length: 1, Cycles: 2, Mode: NONE_ADDRESSING},
 
@@ -46,6 +45,8 @@ var CPU_OPS_CODES map[uint8]OpeCode = map[uint8]OpeCode{
 
 	0x30: {Mnemonic: "BMI", Length: 2, Cycles: 2 /* +1 if branch succeeds, +2 if to a new page*/, Mode: RELATIVE},
 	0xd0: {Mnemonic: "BNE", Length: 2, Cycles: 2 /* +1 if branch succeeds, +2 if to a new page*/, Mode: RELATIVE},
+	0x10: {Mnemonic: "BPL", Length: 2, Cycles: 2 /* +1 if branch succeeds, +2 if to a new page*/, Mode: RELATIVE},
+	0x00: {Mnemonic: "BRK", Length: 1, Cycles: 7, Mode: NONE_ADDRESSING},
 
 	0xa9: {Mnemonic: "LDA", Length: 2, Cycles: 2, Mode: IMMEDIATE},
 	0xa5: {Mnemonic: "LDA", Length: 2, Cycles: 3, Mode: ZERO_PAGE},
