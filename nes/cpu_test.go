@@ -180,7 +180,6 @@ func TestCPUInterpretLDAFromMemory(t *testing.T) {
 	assert.Equal(t, uint8(0x55), cpu.registerA)
 }
 
-// ADCのテストコードを生成する
 func TestCPUADC(t *testing.T) {
 	cases := []struct {
 		name            string
@@ -325,6 +324,40 @@ func TestCPUASL(t *testing.T) {
 				assert.Equal(t, value, cpu.readMemory(addr))
 			}
 			assert.Equal(t, tt.expectStatus, cpu.status)
+		})
+	}
+}
+
+func TestCPUBCC(t *testing.T) {
+	cases := []struct {
+		name     string
+		program  []uint8
+		expectPC uint16
+	}{
+		{
+			name:     "BCC Branch",
+			program:  []uint8{0x90, 0x02, 0x00},
+			expectPC: uint16(0x8005),
+		},
+		{
+			name:     "BCC Branch with negative",
+			program:  []uint8{0x90, 0x80, 0x00},
+			expectPC: uint16(0x7f83),
+		},
+		{
+			name:     "BCC No Branch",
+			program:  []uint8{0xa9, 0xff, 0x0a, 0x90, 0x02, 0x00},
+			expectPC: uint16(0x8006),
+		},
+	}
+
+	for _, tt := range cases {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			cpu := NewCPU()
+			cpu.LoadAndRun(tt.program)
+			assert.Equal(t, tt.expectPC, cpu.programCounter)
 		})
 	}
 }

@@ -15,6 +15,7 @@ const (
 	INDIRECT_X
 	INDIRECT_Y
 	ACCUMULATOR
+	RELATIVE
 	NONE_ADDRESSING
 )
 
@@ -90,6 +91,7 @@ func (c *CPU) adc(mode AddressingMode) error {
 	c.setRegisterA(uint8(tmpValue & 0xff))
 
 	// 結果がオーバーフロー（符号付き加算において結果が-128から127の範囲を超える）した場合、オーバーフローフラグをセットします。それ以外の場合はオーバーフローフラグをクリアします。
+	// 符号付き整数の加算は存在しないため、マイナスの場合は考慮していない
 	if tmpValue > 0x7f {
 		c.status |= CPU_FLAG_OVERFLOW
 	} else {
@@ -137,6 +139,18 @@ func (c *CPU) asl(mode AddressingMode) error {
 	c.updateZeroAndNegativeFlags(value)
 
 	return nil
+}
+
+func (c *CPU) bcc() {
+	if c.status&CPU_FLAG_CARRY == 0 {
+		v := c.readMemory(c.programCounter)
+		// オペランドは符号付き8ビットのオフセットとして解釈される
+		if v > 0x7f {
+			c.programCounter += uint16(v) - uint16(0x100)
+		} else {
+			c.programCounter += uint16(v)
+		}
+	}
 }
 
 func (c *CPU) tax() {
@@ -245,6 +259,8 @@ func (c *CPU) Run() error {
 			if err := c.asl(opsInfo.Mode); err != nil {
 				return err
 			}
+		case "BCC":
+			c.bcc()
 		default:
 			return fmt.Errorf("unknown code: %d", code)
 		}
@@ -284,6 +300,8 @@ func (c *CPU) getOperandAddress(mode AddressingMode) (uint16, error) {
 
 		return deref, nil
 	case ACCUMULATOR:
+		return 0, nil
+	case RELATIVE:
 		return 0, nil
 	default:
 		return 0, fmt.Errorf("unknown addressing mode: %d", mode)
