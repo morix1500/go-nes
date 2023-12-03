@@ -122,7 +122,14 @@ func (c *CPU) bcc() {
 }
 
 func (c *CPU) bcs() {
-	if c.status&CPU_FLAG_CARRY == 1 {
+	if c.status&CPU_FLAG_CARRY != 0 {
+		addr := c.getOperandAddress(RELATIVE)
+		c.programCounter += addr
+	}
+}
+
+func (c *CPU) beq() {
+	if c.status&CPU_FLAG_ZERO != 0 {
 		addr := c.getOperandAddress(RELATIVE)
 		c.programCounter += addr
 	}
@@ -228,6 +235,8 @@ func (c *CPU) Run() {
 			c.bcc()
 		case "BCS":
 			c.bcs()
+		case "BEQ":
+			c.beq()
 		}
 		c.programCounter += uint16(opsInfo.Length - 1)
 	}
