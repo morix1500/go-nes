@@ -49,32 +49,19 @@ func NewCPU() *CPU {
 	}
 }
 
-func (c *CPU) lda(mode AddressingMode) error {
-	addr, err := c.getOperandAddress(mode)
-	if err != nil {
-		return err
-	}
+func (c *CPU) lda(mode AddressingMode) {
+	addr := c.getOperandAddress(mode)
 	value := c.readMemory(addr)
 	c.setRegisterA(value)
-
-	return nil
 }
 
-func (c *CPU) sta(mode AddressingMode) error {
-	addr, err := c.getOperandAddress(mode)
-	if err != nil {
-		return err
-	}
+func (c *CPU) sta(mode AddressingMode) {
+	addr := c.getOperandAddress(mode)
 	c.writeMemory(addr, c.registerA)
-
-	return nil
 }
 
-func (c *CPU) adc(mode AddressingMode) error {
-	addr, err := c.getOperandAddress(mode)
-	if err != nil {
-		return err
-	}
+func (c *CPU) adc(mode AddressingMode) {
+	addr := c.getOperandAddress(mode)
 
 	// Aレジスタの値とメモリの値、そしてキャリーフラグの値（0または1）を加えます。
 	tmpValue := uint16(c.registerA) + uint16(c.readMemory(addr)) + uint16(c.status&CPU_FLAG_CARRY)
@@ -97,22 +84,14 @@ func (c *CPU) adc(mode AddressingMode) error {
 	} else {
 		c.status &= ^CPU_FLAG_OVERFLOW
 	}
-
-	return nil
 }
 
-func (c *CPU) and(mode AddressingMode) error {
-	addr, err := c.getOperandAddress(mode)
-	if err != nil {
-		return err
-	}
-
+func (c *CPU) and(mode AddressingMode) {
+	addr := c.getOperandAddress(mode)
 	c.setRegisterA(c.registerA & c.readMemory(addr))
-
-	return nil
 }
 
-func (c *CPU) asl(mode AddressingMode) error {
+func (c *CPU) asl(mode AddressingMode) {
 	if mode == ACCUMULATOR {
 		if c.registerA&0x80 != 0 {
 			c.status |= CPU_FLAG_CARRY
@@ -120,14 +99,10 @@ func (c *CPU) asl(mode AddressingMode) error {
 			c.status &= ^CPU_FLAG_CARRY
 		}
 		c.setRegisterA(c.registerA << 1)
-		return nil
+		return
 	}
 
-	addr, err := c.getOperandAddress(mode)
-	if err != nil {
-		return err
-	}
-
+	addr := c.getOperandAddress(mode)
 	value := c.readMemory(addr)
 	if value&0x80 != 0 {
 		c.status |= CPU_FLAG_CARRY
@@ -137,20 +112,18 @@ func (c *CPU) asl(mode AddressingMode) error {
 	value <<= 1
 	c.writeMemory(addr, value)
 	c.updateZeroAndNegativeFlags(value)
-
-	return nil
 }
 
 func (c *CPU) bcc() {
 	if c.status&CPU_FLAG_CARRY == 0 {
-		addr, _ := c.getOperandAddress(RELATIVE)
+		addr := c.getOperandAddress(RELATIVE)
 		c.programCounter += addr
 	}
 }
 
 func (c *CPU) bcs() {
 	if c.status&CPU_FLAG_CARRY == 1 {
-		addr, _ := c.getOperandAddress(RELATIVE)
+		addr := c.getOperandAddress(RELATIVE)
 		c.programCounter += addr
 	}
 }
@@ -205,10 +178,10 @@ func (c *CPU) setRegisterA(value uint8) {
 	c.updateZeroAndNegativeFlags(c.registerA)
 }
 
-func (c *CPU) LoadAndRun(program []uint8) error {
+func (c *CPU) LoadAndRun(program []uint8) {
 	c.Load(program)
 	c.Reset()
-	return c.Run()
+	c.Run()
 }
 
 func (c *CPU) Load(program []uint8) {
@@ -223,7 +196,7 @@ func (c *CPU) Reset() {
 	c.programCounter = c.readMemory16(0xFFFC)
 }
 
-func (c *CPU) Run() error {
+func (c *CPU) Run() {
 	var opsInfo OpeCode
 	var ok bool
 	for {
@@ -231,70 +204,58 @@ func (c *CPU) Run() error {
 		c.programCounter++
 
 		if opsInfo, ok = CPU_OPS_CODES[code]; !ok {
-			return fmt.Errorf("unknown code: %d", code)
+			panic(fmt.Sprintf("unknown code: %d", code))
 		}
 
 		switch opsInfo.Mnemonic {
 		case "BRK":
-			return nil
+			return
 		case "TAX":
 			c.tax()
 		case "INX":
 			c.inx()
 		case "LDA":
-			if err := c.lda(opsInfo.Mode); err != nil {
-				return err
-			}
+			c.lda(opsInfo.Mode)
 		case "STA":
-			if err := c.sta(opsInfo.Mode); err != nil {
-				return err
-			}
+			c.sta(opsInfo.Mode)
 		case "ADC":
-			if err := c.adc(opsInfo.Mode); err != nil {
-				return err
-			}
+			c.adc(opsInfo.Mode)
 		case "AND":
-			if err := c.and(opsInfo.Mode); err != nil {
-				return err
-			}
+			c.and(opsInfo.Mode)
 		case "ASL":
-			if err := c.asl(opsInfo.Mode); err != nil {
-				return err
-			}
+			c.asl(opsInfo.Mode)
 		case "BCC":
 			c.bcc()
 		case "BCS":
 			c.bcs()
-		default:
-			return fmt.Errorf("unknown code: %d", code)
 		}
 		c.programCounter += uint16(opsInfo.Length - 1)
 	}
 }
 
-func (c *CPU) getOperandAddress(mode AddressingMode) (uint16, error) {
+func (c *CPU) getOperandAddress(mode AddressingMode) uint16 {
 	switch mode {
 	case IMMEDIATE:
-		return c.programCounter, nil
+		return c.programCounter
 	case ZERO_PAGE:
-		return uint16(c.readMemory(c.programCounter)), nil
+		return uint16(c.readMemory(c.programCounter))
 	case ZERO_PAGE_X:
-		return uint16(c.readMemory(c.programCounter) + c.registerX), nil
+		return uint16(c.readMemory(c.programCounter) + c.registerX)
 	case ZERO_PAGE_Y:
-		return uint16(c.readMemory(c.programCounter) + c.registerY), nil
+		return uint16(c.readMemory(c.programCounter) + c.registerY)
 	case ABSOLUTE:
-		return c.readMemory16(c.programCounter), nil
+		return c.readMemory16(c.programCounter)
 	case ABSOLUTE_X:
-		return c.readMemory16(c.programCounter) + uint16(c.registerX), nil
+		return c.readMemory16(c.programCounter) + uint16(c.registerX)
 	case ABSOLUTE_Y:
-		return c.readMemory16(c.programCounter) + uint16(c.registerY), nil
+		return c.readMemory16(c.programCounter) + uint16(c.registerY)
 	case INDIRECT_X:
 		base := c.readMemory16(c.programCounter)
 		ptr := uint8(base + uint16(c.registerX))
 		lo := c.readMemory(uint16(ptr))
 		hi := c.readMemory(uint16(ptr + 1))
 
-		return uint16(hi)<<8 | uint16(lo), nil
+		return uint16(hi)<<8 | uint16(lo)
 	case INDIRECT_Y:
 		base := c.readMemory(c.programCounter)
 		lo := c.readMemory(uint16(base))
@@ -302,17 +263,17 @@ func (c *CPU) getOperandAddress(mode AddressingMode) (uint16, error) {
 		derefBase := uint16(hi)<<8 | uint16(lo)
 		deref := derefBase + uint16(c.registerY)
 
-		return deref, nil
+		return deref
 	case ACCUMULATOR:
-		return 0, nil
+		return 0
 	case RELATIVE:
 		// オペランドは符号付き8ビットのオフセットとして解釈される
 		address := uint16(c.readMemory(c.programCounter))
 		if address > 0x7f {
 			address = uint16(address) - uint16(0x100)
 		}
-		return address, nil
+		return address
 	default:
-		return 0, fmt.Errorf("unknown addressing mode: %d", mode)
+		panic(fmt.Sprintf("unknown addressing mode: %d", mode))
 	}
 }
