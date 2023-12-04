@@ -55,6 +55,15 @@ var CPU_OPS_CODES map[uint8]OpeCode = map[uint8]OpeCode{
 	0x58: {Mnemonic: "CLI", Length: 1, Cycles: 2, Mode: IMPLIED},
 	0xb8: {Mnemonic: "CLV", Length: 1, Cycles: 2, Mode: IMPLIED},
 
+	0xc9: {Mnemonic: "CMP", Length: 2, Cycles: 2, Mode: IMMEDIATE},
+	0xc5: {Mnemonic: "CMP", Length: 2, Cycles: 3, Mode: ZERO_PAGE},
+	0xd5: {Mnemonic: "CMP", Length: 2, Cycles: 4, Mode: ZERO_PAGE_X},
+	0xcd: {Mnemonic: "CMP", Length: 3, Cycles: 4, Mode: ABSOLUTE},
+	0xdd: {Mnemonic: "CMP", Length: 3, Cycles: 4 /* +1 if page crossed*/, Mode: ABSOLUTE_X},
+	0xd9: {Mnemonic: "CMP", Length: 3, Cycles: 4 /* +1 if page crossed*/, Mode: ABSOLUTE_Y},
+	0xc1: {Mnemonic: "CMP", Length: 2, Cycles: 6, Mode: INDIRECT_X},
+	0xd1: {Mnemonic: "CMP", Length: 2, Cycles: 5 /* +1 if page crossed*/, Mode: INDIRECT_Y},
+
 	0xa9: {Mnemonic: "LDA", Length: 2, Cycles: 2, Mode: IMMEDIATE},
 	0xa5: {Mnemonic: "LDA", Length: 2, Cycles: 3, Mode: ZERO_PAGE},
 	0xb5: {Mnemonic: "LDA", Length: 2, Cycles: 4, Mode: ZERO_PAGE_X},

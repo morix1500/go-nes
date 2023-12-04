@@ -752,3 +752,42 @@ func TestCPUCLV(t *testing.T) {
 		})
 	}
 }
+
+func TestCPUCMP(t *testing.T) {
+	cases := []struct {
+		name         string
+		memory       map[uint16]uint8
+		program      []uint8
+		expectStatus uint8
+	}{
+		{
+			name:         "CMP Immediate with zero",
+			memory:       map[uint16]uint8{0x10: 0x05},
+			program:      []uint8{0xa9, 0x05, 0xc9, 0x05, 0x00},
+			expectStatus: 0b0000_0011,
+		},
+		{
+			name:         "CMP Immediate with carry",
+			memory:       map[uint16]uint8{0x10: 0x05},
+			program:      []uint8{0xa9, 0x05, 0xc9, 0x04, 0x00},
+			expectStatus: 0b0000_0001,
+		},
+		{
+			name:         "CMP Immediate with negative",
+			memory:       map[uint16]uint8{0x10: 0x05},
+			program:      []uint8{0xa9, 0x05, 0xc9, 0x06, 0x00},
+			expectStatus: 0b1000_0000,
+		},
+	}
+	for _, tt := range cases {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			cpu := NewCPU()
+			for addr, value := range tt.memory {
+				cpu.writeMemory(addr, value)
+			}
+			cpu.LoadAndRun(tt.program)
+			assert.Equal(t, tt.expectStatus, cpu.status)
+		})
+	}
+}

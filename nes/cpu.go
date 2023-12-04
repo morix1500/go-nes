@@ -209,6 +209,18 @@ func (c *CPU) clv() {
 	c.status &= ^CPU_FLAG_OVERFLOW
 }
 
+func (c *CPU) cmp(mode AddressingMode) {
+	addr := c.getOperandAddress(mode)
+	value := c.readMemory(addr)
+	if c.registerA >= value {
+		c.status |= CPU_FLAG_CARRY
+	} else {
+		c.status &= ^CPU_FLAG_CARRY
+	}
+
+	c.updateZeroAndNegativeFlags(c.registerA - value)
+}
+
 func (c *CPU) sed() {
 	c.status |= CPU_FLAG_DECIMAL_MODE
 }
@@ -339,6 +351,8 @@ func (c *CPU) Run() {
 			c.cli()
 		case "CLV":
 			c.clv()
+		case "CMP":
+			c.cmp(opsInfo.Mode)
 		case "SED":
 			c.sed()
 		case "SEI":
