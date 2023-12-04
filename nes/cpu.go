@@ -178,6 +178,13 @@ func (c *CPU) bpl() {
 	}
 }
 
+func (c *CPU) bvc() {
+	if c.status&CPU_FLAG_OVERFLOW == 0 {
+		addr := c.getOperandAddress(RELATIVE)
+		c.programCounter += addr
+	}
+}
+
 func (c *CPU) tax() {
 	c.registerX = c.registerA
 	c.updateZeroAndNegativeFlags(c.registerX)
@@ -288,6 +295,8 @@ func (c *CPU) Run() {
 			c.bne()
 		case "BPL":
 			c.bpl()
+		case "BVC":
+			c.bvc()
 		}
 		c.programCounter += uint16(opsInfo.Length - 1)
 	}
