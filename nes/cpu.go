@@ -197,6 +197,14 @@ func (c *CPU) clc() {
 	c.status &= ^CPU_FLAG_CARRY
 }
 
+func (c *CPU) cld() {
+	c.status &= ^CPU_FLAG_DECIMAL_MODE
+}
+
+func (c *CPU) sed() {
+	c.status |= CPU_FLAG_DECIMAL_MODE
+}
+
 func (c *CPU) tax() {
 	c.registerX = c.registerA
 	c.updateZeroAndNegativeFlags(c.registerX)
@@ -313,6 +321,10 @@ func (c *CPU) Run() {
 			c.bvs()
 		case "CLC":
 			c.clc()
+		case "CLD":
+			c.cld()
+		case "SED":
+			c.sed()
 		}
 		c.programCounter += uint16(opsInfo.Length - 1)
 	}

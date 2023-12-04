@@ -51,6 +51,7 @@ var CPU_OPS_CODES map[uint8]OpeCode = map[uint8]OpeCode{
 	0x50: {Mnemonic: "BVC", Length: 2, Cycles: 2 /* +1 if branch succeeds, +2 if to a new page*/, Mode: RELATIVE},
 	0x70: {Mnemonic: "BVS", Length: 2, Cycles: 2 /* +1 if branch succeeds, +2 if to a new page*/, Mode: RELATIVE},
 	0x18: {Mnemonic: "CLC", Length: 1, Cycles: 2, Mode: IMPLIED},
+	0xd8: {Mnemonic: "CLD", Length: 1, Cycles: 2, Mode: IMPLIED},
 
 	0xa9: {Mnemonic: "LDA", Length: 2, Cycles: 2, Mode: IMMEDIATE},
 	0xa5: {Mnemonic: "LDA", Length: 2, Cycles: 3, Mode: ZERO_PAGE},
@@ -61,6 +62,7 @@ var CPU_OPS_CODES map[uint8]OpeCode = map[uint8]OpeCode{
 	0xa1: {Mnemonic: "LDA", Length: 2, Cycles: 6, Mode: INDIRECT_X},
 	0xb1: {Mnemonic: "LDA", Length: 2, Cycles: 5 /* +1 if page crossed*/, Mode: INDIRECT_Y},
 
+	0xf8: {Mnemonic: "SED", Length: 1, Cycles: 2, Mode: IMPLIED},
 	0x85: {Mnemonic: "STA", Length: 2, Cycles: 3, Mode: ZERO_PAGE},
 	0x95: {Mnemonic: "STA", Length: 2, Cycles: 4, Mode: ZERO_PAGE_X},
 	0x8d: {Mnemonic: "STA", Length: 3, Cycles: 4, Mode: ABSOLUTE},
