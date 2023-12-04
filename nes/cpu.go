@@ -269,6 +269,14 @@ func (c *CPU) cpy(mode AddressingMode) {
 	c.updateZeroAndNegativeFlags(c.registerY - value)
 }
 
+func (c *CPU) dec(mode AddressingMode) {
+	addr := c.getOperandAddress(mode)
+	value := c.readMemory(addr)
+	value--
+	c.writeMemory(addr, value)
+	c.updateZeroAndNegativeFlags(value)
+}
+
 func (c *CPU) inc(mode AddressingMode) {
 	addr := c.getOperandAddress(mode)
 	value := c.readMemory(addr)
@@ -415,6 +423,8 @@ func (c *CPU) Run() {
 			c.cpx(opsInfo.Mode)
 		case "CPY":
 			c.cpy(opsInfo.Mode)
+		case "DEC":
+			c.dec(opsInfo.Mode)
 		case "INC":
 			c.inc(opsInfo.Mode)
 		case "INX":

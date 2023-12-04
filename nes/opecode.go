@@ -60,14 +60,17 @@ var CPU_OPS_CODES map[uint8]OpeCode = map[uint8]OpeCode{
 	0xd9: {Mnemonic: "CMP", Length: 3, Cycles: 4 /* +1 if page crossed*/, Mode: ABSOLUTE_Y},
 	0xc1: {Mnemonic: "CMP", Length: 2, Cycles: 6, Mode: INDIRECT_X},
 	0xd1: {Mnemonic: "CMP", Length: 2, Cycles: 5 /* +1 if page crossed*/, Mode: INDIRECT_Y},
-
 	0xe0: {Mnemonic: "CPX", Length: 2, Cycles: 2, Mode: IMMEDIATE},
 	0xe4: {Mnemonic: "CPX", Length: 2, Cycles: 3, Mode: ZERO_PAGE},
 	0xec: {Mnemonic: "CPX", Length: 3, Cycles: 4, Mode: ABSOLUTE},
-
 	0xc0: {Mnemonic: "CPY", Length: 2, Cycles: 2, Mode: IMMEDIATE},
 	0xc4: {Mnemonic: "CPY", Length: 2, Cycles: 3, Mode: ZERO_PAGE},
 	0xcc: {Mnemonic: "CPY", Length: 3, Cycles: 4, Mode: ABSOLUTE},
+
+	0xc6: {Mnemonic: "DEC", Length: 2, Cycles: 5, Mode: ZERO_PAGE},
+	0xd6: {Mnemonic: "DEC", Length: 2, Cycles: 6, Mode: ZERO_PAGE_X},
+	0xce: {Mnemonic: "DEC", Length: 3, Cycles: 6, Mode: ABSOLUTE},
+	0xde: {Mnemonic: "DEC", Length: 3, Cycles: 7, Mode: ABSOLUTE_X},
 
 	0xe6: {Mnemonic: "INC", Length: 2, Cycles: 5, Mode: ZERO_PAGE},
 	0xf6: {Mnemonic: "INC", Length: 2, Cycles: 6, Mode: ZERO_PAGE_X},

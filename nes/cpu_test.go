@@ -1011,3 +1011,10 @@ func TestCPUCPY(t *testing.T) {
 		})
 	}
 }
+
+func TestCPUDEC(t *testing.T) {
+	cpu := NewCPU()
+	cpu.memory[0x10] = 0x05
+	cpu.LoadAndRun([]uint8{0xc6, 0x10, 0x00})
+	assert.Equal(t, uint8(0x04), cpu.memory[0x10])
+}
