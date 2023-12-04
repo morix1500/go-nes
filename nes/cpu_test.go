@@ -145,6 +145,14 @@ func TestCPUInterpretaTaxMoveAToX(t *testing.T) {
 	assert.Equal(t, uint8(10), cpu.registerX)
 }
 
+func TestCPUInterpretaTaxMoveAToY(t *testing.T) {
+	cpu := NewCPU()
+	// LDA $0a
+	// TAY
+	cpu.LoadAndRun([]uint8{0xa9, 0x0a, 0xa8, 0x00})
+	assert.Equal(t, uint8(10), cpu.registerY)
+}
+
 func TestCPUInterpretInx(t *testing.T) {
 	cpu := NewCPU()
 	// LDA $02
@@ -162,6 +170,25 @@ func TestCPUInterpretInxOverflow(t *testing.T) {
 	// INX
 	cpu.LoadAndRun([]uint8{0xa9, 0xff, 0xaa, 0xe8, 0xe8, 0x00})
 	assert.Equal(t, uint8(1), cpu.registerX)
+}
+
+func TestCPUInterpretIny(t *testing.T) {
+	cpu := NewCPU()
+	// LDA $02
+	// TAX
+	// INY
+	cpu.LoadAndRun([]uint8{0xa9, 0x02, 0xa8, 0xc8, 0x00})
+	assert.Equal(t, uint8(3), cpu.registerY)
+}
+
+func TestCPUInterpretInyOverflow(t *testing.T) {
+	cpu := NewCPU()
+	// LDA $ff
+	// TAX
+	// INY
+	// INY
+	cpu.LoadAndRun([]uint8{0xa9, 0xff, 0xa8, 0xc8, 0xc8, 0x00})
+	assert.Equal(t, uint8(1), cpu.registerY)
 }
 
 func TestCPUInterpret5OpsWorkingTogether(t *testing.T) {

@@ -9,9 +9,6 @@ type OpeCode struct {
 }
 
 var CPU_OPS_CODES map[uint8]OpeCode = map[uint8]OpeCode{
-	0xaa: {Mnemonic: "TAX", Length: 1, Cycles: 2, Mode: NONE_ADDRESSING},
-	0xe8: {Mnemonic: "INX", Length: 1, Cycles: 2, Mode: NONE_ADDRESSING},
-
 	0x69: {Mnemonic: "ADC", Length: 2, Cycles: 2, Mode: IMMEDIATE},
 	0x65: {Mnemonic: "ADC", Length: 2, Cycles: 3, Mode: ZERO_PAGE},
 	0x75: {Mnemonic: "ADC", Length: 2, Cycles: 4, Mode: ZERO_PAGE_X},
@@ -68,6 +65,9 @@ var CPU_OPS_CODES map[uint8]OpeCode = map[uint8]OpeCode{
 	0xe4: {Mnemonic: "CPX", Length: 2, Cycles: 3, Mode: ZERO_PAGE},
 	0xec: {Mnemonic: "CPX", Length: 3, Cycles: 4, Mode: ABSOLUTE},
 
+	0xe8: {Mnemonic: "INX", Length: 1, Cycles: 2, Mode: IMPLIED},
+	0xc8: {Mnemonic: "INY", Length: 1, Cycles: 2, Mode: IMPLIED},
+
 	0xa9: {Mnemonic: "LDA", Length: 2, Cycles: 2, Mode: IMMEDIATE},
 	0xa5: {Mnemonic: "LDA", Length: 2, Cycles: 3, Mode: ZERO_PAGE},
 	0xb5: {Mnemonic: "LDA", Length: 2, Cycles: 4, Mode: ZERO_PAGE_X},
@@ -87,4 +87,7 @@ var CPU_OPS_CODES map[uint8]OpeCode = map[uint8]OpeCode{
 	0x99: {Mnemonic: "STA", Length: 3, Cycles: 5, Mode: ABSOLUTE_Y},
 	0x81: {Mnemonic: "STA", Length: 2, Cycles: 6, Mode: INDIRECT_X},
 	0x91: {Mnemonic: "STA", Length: 2, Cycles: 6, Mode: INDIRECT_Y},
+
+	0xaa: {Mnemonic: "TAX", Length: 1, Cycles: 2, Mode: IMPLIED},
+	0xa8: {Mnemonic: "TAY", Length: 1, Cycles: 2, Mode: IMPLIED},
 }

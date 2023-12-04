@@ -233,6 +233,16 @@ func (c *CPU) cpx(mode AddressingMode) {
 	c.updateZeroAndNegativeFlags(c.registerX - value)
 }
 
+func (c *CPU) inx() {
+	c.registerX++
+	c.updateZeroAndNegativeFlags(c.registerX)
+}
+
+func (c *CPU) iny() {
+	c.registerY++
+	c.updateZeroAndNegativeFlags(c.registerY)
+}
+
 func (c *CPU) sed() {
 	c.status |= CPU_FLAG_DECIMAL_MODE
 }
@@ -246,9 +256,9 @@ func (c *CPU) tax() {
 	c.updateZeroAndNegativeFlags(c.registerX)
 }
 
-func (c *CPU) inx() {
-	c.registerX++
-	c.updateZeroAndNegativeFlags(c.registerX)
+func (c *CPU) tay() {
+	c.registerY = c.registerA
+	c.updateZeroAndNegativeFlags(c.registerY)
 }
 
 func (c *CPU) updateZeroAndNegativeFlags(result uint8) {
@@ -323,10 +333,6 @@ func (c *CPU) Run() {
 		switch opsInfo.Mnemonic {
 		case "BRK":
 			return
-		case "TAX":
-			c.tax()
-		case "INX":
-			c.inx()
 		case "LDA":
 			c.lda(opsInfo.Mode)
 		case "STA":
@@ -367,10 +373,18 @@ func (c *CPU) Run() {
 			c.cmp(opsInfo.Mode)
 		case "CPX":
 			c.cpx(opsInfo.Mode)
+		case "INX":
+			c.inx()
+		case "INY":
+			c.iny()
 		case "SED":
 			c.sed()
 		case "SEI":
 			c.sei()
+		case "TAX":
+			c.tax()
+		case "TAY":
+			c.tay()
 		}
 		c.programCounter += uint16(opsInfo.Length - 1)
 	}
