@@ -111,6 +111,15 @@ var CPU_OPS_CODES map[uint8]OpeCode = map[uint8]OpeCode{
 	0xac: {Mnemonic: "LDY", Length: 3, Cycles: 4, Mode: ABSOLUTE},
 	0xbc: {Mnemonic: "LDY", Length: 3, Cycles: 4 /* +1 if page crossed*/, Mode: ABSOLUTE_X},
 
+	0x09: {Mnemonic: "ORA", Length: 2, Cycles: 2, Mode: IMMEDIATE},
+	0x05: {Mnemonic: "ORA", Length: 2, Cycles: 3, Mode: ZERO_PAGE},
+	0x15: {Mnemonic: "ORA", Length: 2, Cycles: 4, Mode: ZERO_PAGE_X},
+	0x0d: {Mnemonic: "ORA", Length: 3, Cycles: 4, Mode: ABSOLUTE},
+	0x1d: {Mnemonic: "ORA", Length: 3, Cycles: 4 /* +1 if page crossed*/, Mode: ABSOLUTE_X},
+	0x19: {Mnemonic: "ORA", Length: 3, Cycles: 4 /* +1 if page crossed*/, Mode: ABSOLUTE_Y},
+	0x01: {Mnemonic: "ORA", Length: 2, Cycles: 6, Mode: INDIRECT_X},
+	0x11: {Mnemonic: "ORA", Length: 2, Cycles: 5 /* +1 if page crossed*/, Mode: INDIRECT_Y},
+
 	0xf8: {Mnemonic: "SED", Length: 1, Cycles: 2, Mode: IMPLIED},
 	0x78: {Mnemonic: "SEI", Length: 1, Cycles: 2, Mode: IMPLIED},
 

@@ -310,6 +310,11 @@ func (c *CPU) iny() {
 	c.updateZeroAndNegativeFlags(c.registerY)
 }
 
+func (c *CPU) ora(mode AddressingMode) {
+	addr := c.getOperandAddress(mode)
+	c.setRegisterA(c.registerA | c.readMemory(addr))
+}
+
 func (c *CPU) sed() {
 	c.status |= CPU_FLAG_DECIMAL_MODE
 }
@@ -458,6 +463,8 @@ func (c *CPU) Run() {
 			c.ldx(opsInfo.Mode)
 		case "LDY":
 			c.ldy(opsInfo.Mode)
+		case "ORA":
+			c.ora(opsInfo.Mode)
 		case "SED":
 			c.sed()
 		case "SEI":

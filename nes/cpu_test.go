@@ -1057,3 +1057,30 @@ func TestCPUEOR(t *testing.T) {
 		})
 	}
 }
+
+func TestCPUORA(t *testing.T) {
+	cases := []struct {
+		name            string
+		program         []uint8
+		expectRegisterA uint8
+		expectStatus    uint8
+	}{
+		{
+			name:            "ORA Immediate",
+			program:         []uint8{0xa9, 0x05, 0x09, 0x0a, 0x00},
+			expectRegisterA: uint8(0x0f),
+			expectStatus:    0b0000_0000,
+		},
+	}
+
+	for _, tt := range cases {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			cpu := NewCPU()
+			cpu.LoadAndRun(tt.program)
+			assert.Equal(t, tt.expectRegisterA, cpu.registerA)
+			assert.Equal(t, tt.expectStatus, cpu.status)
+		})
+	}
+}
