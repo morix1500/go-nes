@@ -277,6 +277,16 @@ func (c *CPU) dec(mode AddressingMode) {
 	c.updateZeroAndNegativeFlags(value)
 }
 
+func (c *CPU) dex() {
+	c.registerX--
+	c.updateZeroAndNegativeFlags(c.registerX)
+}
+
+func (c *CPU) dey() {
+	c.registerY--
+	c.updateZeroAndNegativeFlags(c.registerY)
+}
+
 func (c *CPU) inc(mode AddressingMode) {
 	addr := c.getOperandAddress(mode)
 	value := c.readMemory(addr)
@@ -425,6 +435,10 @@ func (c *CPU) Run() {
 			c.cpy(opsInfo.Mode)
 		case "DEC":
 			c.dec(opsInfo.Mode)
+		case "DEX":
+			c.dex()
+		case "DEY":
+			c.dey()
 		case "INC":
 			c.inc(opsInfo.Mode)
 		case "INX":

@@ -71,6 +71,8 @@ var CPU_OPS_CODES map[uint8]OpeCode = map[uint8]OpeCode{
 	0xd6: {Mnemonic: "DEC", Length: 2, Cycles: 6, Mode: ZERO_PAGE_X},
 	0xce: {Mnemonic: "DEC", Length: 3, Cycles: 6, Mode: ABSOLUTE},
 	0xde: {Mnemonic: "DEC", Length: 3, Cycles: 7, Mode: ABSOLUTE_X},
+	0xca: {Mnemonic: "DEX", Length: 1, Cycles: 2, Mode: IMPLIED},
+	0x88: {Mnemonic: "DEY", Length: 1, Cycles: 2, Mode: IMPLIED},
 
 	0xe6: {Mnemonic: "INC", Length: 2, Cycles: 5, Mode: ZERO_PAGE},
 	0xf6: {Mnemonic: "INC", Length: 2, Cycles: 6, Mode: ZERO_PAGE_X},

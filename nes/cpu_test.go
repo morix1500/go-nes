@@ -1018,3 +1018,15 @@ func TestCPUDEC(t *testing.T) {
 	cpu.LoadAndRun([]uint8{0xc6, 0x10, 0x00})
 	assert.Equal(t, uint8(0x04), cpu.memory[0x10])
 }
+
+func TestCPUDEX(t *testing.T) {
+	cpu := NewCPU()
+	cpu.LoadAndRun([]uint8{0xa2, 0x10, 0xca, 0x00})
+	assert.Equal(t, uint8(0x0f), cpu.registerX)
+}
+
+func TestCPUDEY(t *testing.T) {
+	cpu := NewCPU()
+	cpu.LoadAndRun([]uint8{0xa0, 0x10, 0x88, 0x00})
+	assert.Equal(t, uint8(0x0f), cpu.registerY)
+}
