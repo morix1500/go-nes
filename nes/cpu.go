@@ -63,6 +63,13 @@ func (c *CPU) ldx(mode AddressingMode) {
 	c.updateZeroAndNegativeFlags(c.registerX)
 }
 
+func (c *CPU) ldy(mode AddressingMode) {
+	addr := c.getOperandAddress(mode)
+	value := c.readMemory(addr)
+	c.registerY = value
+	c.updateZeroAndNegativeFlags(c.registerY)
+}
+
 func (c *CPU) sta(mode AddressingMode) {
 	addr := c.getOperandAddress(mode)
 	c.writeMemory(addr, c.registerA)
@@ -400,6 +407,8 @@ func (c *CPU) Run() {
 			c.lda(opsInfo.Mode)
 		case "LDX":
 			c.ldx(opsInfo.Mode)
+		case "LDY":
+			c.ldy(opsInfo.Mode)
 		case "SED":
 			c.sed()
 		case "SEI":
