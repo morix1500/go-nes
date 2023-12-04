@@ -69,6 +69,10 @@ var CPU_OPS_CODES map[uint8]OpeCode = map[uint8]OpeCode{
 	0xc4: {Mnemonic: "CPY", Length: 2, Cycles: 3, Mode: ZERO_PAGE},
 	0xcc: {Mnemonic: "CPY", Length: 3, Cycles: 4, Mode: ABSOLUTE},
 
+	0xe6: {Mnemonic: "INC", Length: 2, Cycles: 5, Mode: ZERO_PAGE},
+	0xf6: {Mnemonic: "INC", Length: 2, Cycles: 6, Mode: ZERO_PAGE_X},
+	0xee: {Mnemonic: "INC", Length: 3, Cycles: 6, Mode: ABSOLUTE},
+	0xfe: {Mnemonic: "INC", Length: 3, Cycles: 7, Mode: ABSOLUTE_X},
 	0xe8: {Mnemonic: "INX", Length: 1, Cycles: 2, Mode: IMPLIED},
 	0xc8: {Mnemonic: "INY", Length: 1, Cycles: 2, Mode: IMPLIED},
 

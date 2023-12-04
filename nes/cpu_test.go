@@ -261,6 +261,13 @@ func TestCPUInterpretaTaxMoveAToY(t *testing.T) {
 	assert.Equal(t, uint8(10), cpu.registerY)
 }
 
+func TestCPUINC(t *testing.T) {
+	cpu := NewCPU()
+	cpu.memory[0x10] = 0x05
+	cpu.LoadAndRun([]uint8{0xe6, 0x10, 0x00})
+	assert.Equal(t, uint8(0x06), cpu.memory[0x10])
+}
+
 func TestCPUInterpretInx(t *testing.T) {
 	cpu := NewCPU()
 	// LDA $02
