@@ -53,6 +53,7 @@ var CPU_OPS_CODES map[uint8]OpeCode = map[uint8]OpeCode{
 	0x18: {Mnemonic: "CLC", Length: 1, Cycles: 2, Mode: IMPLIED},
 	0xd8: {Mnemonic: "CLD", Length: 1, Cycles: 2, Mode: IMPLIED},
 	0x58: {Mnemonic: "CLI", Length: 1, Cycles: 2, Mode: IMPLIED},
+	0xb8: {Mnemonic: "CLV", Length: 1, Cycles: 2, Mode: IMPLIED},
 
 	0xa9: {Mnemonic: "LDA", Length: 2, Cycles: 2, Mode: IMMEDIATE},
 	0xa5: {Mnemonic: "LDA", Length: 2, Cycles: 3, Mode: ZERO_PAGE},

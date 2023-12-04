@@ -205,6 +205,10 @@ func (c *CPU) cli() {
 	c.status &= ^CPU_FLAG_INTERRUPT_DISABLE
 }
 
+func (c *CPU) clv() {
+	c.status &= ^CPU_FLAG_OVERFLOW
+}
+
 func (c *CPU) sed() {
 	c.status |= CPU_FLAG_DECIMAL_MODE
 }
@@ -333,6 +337,8 @@ func (c *CPU) Run() {
 			c.cld()
 		case "CLI":
 			c.cli()
+		case "CLV":
+			c.clv()
 		case "SED":
 			c.sed()
 		case "SEI":

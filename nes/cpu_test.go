@@ -730,3 +730,25 @@ func TestCPUSEI(t *testing.T) {
 		})
 	}
 }
+
+func TestCPUCLV(t *testing.T) {
+	cases := []struct {
+		name         string
+		program      []uint8
+		expectStatus uint8
+	}{
+		{
+			name:         "CLV",
+			program:      []uint8{0xa9, 0x7f, 0x69, 0x01, 0xb8, 0x00},
+			expectStatus: 0b1000_0000,
+		},
+	}
+	for _, tt := range cases {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			cpu := NewCPU()
+			cpu.LoadAndRun(tt.program)
+			assert.Equal(t, tt.expectStatus, cpu.status)
+		})
+	}
+}
