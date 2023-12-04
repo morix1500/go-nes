@@ -233,6 +233,18 @@ func (c *CPU) cpx(mode AddressingMode) {
 	c.updateZeroAndNegativeFlags(c.registerX - value)
 }
 
+func (c *CPU) cpy(mode AddressingMode) {
+	addr := c.getOperandAddress(mode)
+	value := c.readMemory(addr)
+	if c.registerY >= value {
+		c.status |= CPU_FLAG_CARRY
+	} else {
+		c.status &= ^CPU_FLAG_CARRY
+	}
+
+	c.updateZeroAndNegativeFlags(c.registerY - value)
+}
+
 func (c *CPU) inx() {
 	c.registerX++
 	c.updateZeroAndNegativeFlags(c.registerX)
@@ -373,6 +385,8 @@ func (c *CPU) Run() {
 			c.cmp(opsInfo.Mode)
 		case "CPX":
 			c.cpx(opsInfo.Mode)
+		case "CPY":
+			c.cpy(opsInfo.Mode)
 		case "INX":
 			c.inx()
 		case "INY":
