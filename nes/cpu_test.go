@@ -559,7 +559,6 @@ func TestCPUBPL(t *testing.T) {
 	}
 }
 
-// BVCのテストコードを生成する
 func TestCPUBVC(t *testing.T) {
 	cases := []struct {
 		name     string
@@ -575,6 +574,34 @@ func TestCPUBVC(t *testing.T) {
 			name:     "BVC No Branch",
 			program:  []uint8{0xa9, 0x7f, 0xaa, 0x69, 0x01, 0x50, 0x02, 0x00},
 			expectPC: uint16(0x8008),
+		},
+	}
+
+	for _, tt := range cases {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			cpu := NewCPU()
+			cpu.LoadAndRun(tt.program)
+			assert.Equal(t, tt.expectPC, cpu.programCounter)
+		})
+	}
+}
+
+func TestCPUBVS(t *testing.T) {
+	cases := []struct {
+		name     string
+		program  []uint8
+		expectPC uint16
+	}{
+		{
+			name:     "BVS Branch",
+			program:  []uint8{0xa9, 0x7f, 0xaa, 0x69, 0x01, 0x70, 0x02, 0x00},
+			expectPC: uint16(0x800a),
+		},
+		{
+			name:     "BVS No Branch",
+			program:  []uint8{0x70, 0x02, 0x00},
+			expectPC: uint16(0x8003),
 		},
 	}
 
