@@ -81,6 +81,12 @@ var CPU_OPS_CODES map[uint8]OpeCode = map[uint8]OpeCode{
 	0xa1: {Mnemonic: "LDA", Length: 2, Cycles: 6, Mode: INDIRECT_X},
 	0xb1: {Mnemonic: "LDA", Length: 2, Cycles: 5 /* +1 if page crossed*/, Mode: INDIRECT_Y},
 
+	0xa2: {Mnemonic: "LDX", Length: 2, Cycles: 2, Mode: IMMEDIATE},
+	0xa6: {Mnemonic: "LDX", Length: 2, Cycles: 3, Mode: ZERO_PAGE},
+	0xb6: {Mnemonic: "LDX", Length: 2, Cycles: 4, Mode: ZERO_PAGE_Y},
+	0xae: {Mnemonic: "LDX", Length: 3, Cycles: 4, Mode: ABSOLUTE},
+	0xbe: {Mnemonic: "LDX", Length: 3, Cycles: 4 /* +1 if page crossed*/, Mode: ABSOLUTE_Y},
+
 	0xf8: {Mnemonic: "SED", Length: 1, Cycles: 2, Mode: IMPLIED},
 	0x78: {Mnemonic: "SEI", Length: 1, Cycles: 2, Mode: IMPLIED},
 

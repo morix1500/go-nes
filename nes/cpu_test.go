@@ -67,6 +67,30 @@ func TestCPULDA(t *testing.T) {
 	}
 }
 
+func TestCPULDX(t *testing.T) {
+	cases := []struct {
+		name            string
+		program         []uint8
+		expectRegisterX uint8
+	}{
+		{
+			name:            "LDX Immediate",
+			program:         []uint8{0xa2, 0x05, 0x00},
+			expectRegisterX: uint8(0x05),
+		},
+	}
+
+	for _, tt := range cases {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			cpu := NewCPU()
+			cpu.LoadAndRun(tt.program)
+			assert.Equal(t, tt.expectRegisterX, cpu.registerX)
+		})
+	}
+}
+
 func TestCPUSTA(t *testing.T) {
 	cases := []struct {
 		name         string

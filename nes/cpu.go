@@ -56,6 +56,13 @@ func (c *CPU) lda(mode AddressingMode) {
 	c.setRegisterA(value)
 }
 
+func (c *CPU) ldx(mode AddressingMode) {
+	addr := c.getOperandAddress(mode)
+	value := c.readMemory(addr)
+	c.registerX = value
+	c.updateZeroAndNegativeFlags(c.registerX)
+}
+
 func (c *CPU) sta(mode AddressingMode) {
 	addr := c.getOperandAddress(mode)
 	c.writeMemory(addr, c.registerA)
@@ -345,8 +352,6 @@ func (c *CPU) Run() {
 		switch opsInfo.Mnemonic {
 		case "BRK":
 			return
-		case "LDA":
-			c.lda(opsInfo.Mode)
 		case "STA":
 			c.sta(opsInfo.Mode)
 		case "ADC":
@@ -391,6 +396,10 @@ func (c *CPU) Run() {
 			c.inx()
 		case "INY":
 			c.iny()
+		case "LDA":
+			c.lda(opsInfo.Mode)
+		case "LDX":
+			c.ldx(opsInfo.Mode)
 		case "SED":
 			c.sed()
 		case "SEI":
