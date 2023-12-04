@@ -80,6 +80,11 @@ func (c *CPU) stx(mode AddressingMode) {
 	c.writeMemory(addr, c.registerX)
 }
 
+func (c *CPU) sty(mode AddressingMode) {
+	addr := c.getOperandAddress(mode)
+	c.writeMemory(addr, c.registerY)
+}
+
 func (c *CPU) adc(mode AddressingMode) {
 	addr := c.getOperandAddress(mode)
 
@@ -420,6 +425,8 @@ func (c *CPU) Run() {
 			c.sta(opsInfo.Mode)
 		case "STX":
 			c.stx(opsInfo.Mode)
+		case "STY":
+			c.sty(opsInfo.Mode)
 		case "TAX":
 			c.tax()
 		case "TAY":

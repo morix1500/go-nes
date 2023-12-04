@@ -201,6 +201,36 @@ func TestCPUSTX(t *testing.T) {
 	}
 }
 
+func TestCPUSTY(t *testing.T) {
+	cases := []struct {
+		name         string
+		memory       map[uint16]uint8
+		program      []uint8
+		expectMemory map[uint16]uint8
+	}{
+		{
+			name:         "STY ZeroPage",
+			program:      []uint8{0xa0, 0x05, 0x84, 0x10, 0x00},
+			expectMemory: map[uint16]uint8{0x10: 0x05},
+		},
+	}
+
+	for _, tt := range cases {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			cpu := NewCPU()
+			for addr, value := range tt.memory {
+				cpu.writeMemory(addr, value)
+			}
+			cpu.LoadAndRun(tt.program)
+			for addr, value := range tt.expectMemory {
+				assert.Equal(t, value, cpu.readMemory(addr))
+			}
+		})
+	}
+}
+
 func TestCPUInterpretLDAImmediateLoad(t *testing.T) {
 	cpu := NewCPU()
 	cpu.LoadAndRun([]uint8{0xa9, 0x05, 0x00})
