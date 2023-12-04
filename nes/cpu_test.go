@@ -684,3 +684,49 @@ func TestCPUSED(t *testing.T) {
 		})
 	}
 }
+
+func TestCPUCLI(t *testing.T) {
+	cases := []struct {
+		name         string
+		program      []uint8
+		expectStatus uint8
+	}{
+		{
+			name:         "CLI",
+			program:      []uint8{0x78, 0x58, 0x00},
+			expectStatus: 0b0000_0000,
+		},
+	}
+
+	for _, tt := range cases {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			cpu := NewCPU()
+			cpu.LoadAndRun(tt.program)
+			assert.Equal(t, tt.expectStatus, cpu.status)
+		})
+	}
+}
+
+func TestCPUSEI(t *testing.T) {
+	cases := []struct {
+		name         string
+		program      []uint8
+		expectStatus uint8
+	}{
+		{
+			name:         "SEI",
+			program:      []uint8{0x78, 0x00},
+			expectStatus: 0b0000_0100,
+		},
+	}
+
+	for _, tt := range cases {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			cpu := NewCPU()
+			cpu.LoadAndRun(tt.program)
+			assert.Equal(t, tt.expectStatus, cpu.status)
+		})
+	}
+}

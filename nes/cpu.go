@@ -201,8 +201,16 @@ func (c *CPU) cld() {
 	c.status &= ^CPU_FLAG_DECIMAL_MODE
 }
 
+func (c *CPU) cli() {
+	c.status &= ^CPU_FLAG_INTERRUPT_DISABLE
+}
+
 func (c *CPU) sed() {
 	c.status |= CPU_FLAG_DECIMAL_MODE
+}
+
+func (c *CPU) sei() {
+	c.status |= CPU_FLAG_INTERRUPT_DISABLE
 }
 
 func (c *CPU) tax() {
@@ -323,8 +331,12 @@ func (c *CPU) Run() {
 			c.clc()
 		case "CLD":
 			c.cld()
+		case "CLI":
+			c.cli()
 		case "SED":
 			c.sed()
+		case "SEI":
+			c.sei()
 		}
 		c.programCounter += uint16(opsInfo.Length - 1)
 	}
