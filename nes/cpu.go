@@ -221,6 +221,18 @@ func (c *CPU) cmp(mode AddressingMode) {
 	c.updateZeroAndNegativeFlags(c.registerA - value)
 }
 
+func (c *CPU) cpx(mode AddressingMode) {
+	addr := c.getOperandAddress(mode)
+	value := c.readMemory(addr)
+	if c.registerX >= value {
+		c.status |= CPU_FLAG_CARRY
+	} else {
+		c.status &= ^CPU_FLAG_CARRY
+	}
+
+	c.updateZeroAndNegativeFlags(c.registerX - value)
+}
+
 func (c *CPU) sed() {
 	c.status |= CPU_FLAG_DECIMAL_MODE
 }
@@ -353,6 +365,8 @@ func (c *CPU) Run() {
 			c.clv()
 		case "CMP":
 			c.cmp(opsInfo.Mode)
+		case "CPX":
+			c.cpx(opsInfo.Mode)
 		case "SED":
 			c.sed()
 		case "SEI":
