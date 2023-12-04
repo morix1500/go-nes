@@ -287,6 +287,11 @@ func (c *CPU) dey() {
 	c.updateZeroAndNegativeFlags(c.registerY)
 }
 
+func (c *CPU) eor(mode AddressingMode) {
+	addr := c.getOperandAddress(mode)
+	c.setRegisterA(c.registerA ^ c.readMemory(addr))
+}
+
 func (c *CPU) inc(mode AddressingMode) {
 	addr := c.getOperandAddress(mode)
 	value := c.readMemory(addr)
@@ -439,6 +444,8 @@ func (c *CPU) Run() {
 			c.dex()
 		case "DEY":
 			c.dey()
+		case "EOR":
+			c.eor(opsInfo.Mode)
 		case "INC":
 			c.inc(opsInfo.Mode)
 		case "INX":

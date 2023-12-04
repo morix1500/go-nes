@@ -74,6 +74,15 @@ var CPU_OPS_CODES map[uint8]OpeCode = map[uint8]OpeCode{
 	0xca: {Mnemonic: "DEX", Length: 1, Cycles: 2, Mode: IMPLIED},
 	0x88: {Mnemonic: "DEY", Length: 1, Cycles: 2, Mode: IMPLIED},
 
+	0x49: {Mnemonic: "EOR", Length: 2, Cycles: 2, Mode: IMMEDIATE},
+	0x45: {Mnemonic: "EOR", Length: 2, Cycles: 3, Mode: ZERO_PAGE},
+	0x55: {Mnemonic: "EOR", Length: 2, Cycles: 4, Mode: ZERO_PAGE_X},
+	0x4d: {Mnemonic: "EOR", Length: 3, Cycles: 4, Mode: ABSOLUTE},
+	0x5d: {Mnemonic: "EOR", Length: 3, Cycles: 4 /* +1 if page crossed*/, Mode: ABSOLUTE_X},
+	0x59: {Mnemonic: "EOR", Length: 3, Cycles: 4 /* +1 if page crossed*/, Mode: ABSOLUTE_Y},
+	0x41: {Mnemonic: "EOR", Length: 2, Cycles: 6, Mode: INDIRECT_X},
+	0x51: {Mnemonic: "EOR", Length: 2, Cycles: 5 /* +1 if page crossed*/, Mode: INDIRECT_Y},
+
 	0xe6: {Mnemonic: "INC", Length: 2, Cycles: 5, Mode: ZERO_PAGE},
 	0xf6: {Mnemonic: "INC", Length: 2, Cycles: 6, Mode: ZERO_PAGE_X},
 	0xee: {Mnemonic: "INC", Length: 3, Cycles: 6, Mode: ABSOLUTE},
