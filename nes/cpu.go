@@ -16,6 +16,7 @@ const (
 	INDIRECT_Y
 	ACCUMULATOR
 	RELATIVE
+	IMPLIED
 	NONE_ADDRESSING
 )
 
@@ -192,6 +193,10 @@ func (c *CPU) bvs() {
 	}
 }
 
+func (c *CPU) clc() {
+	c.status &= ^CPU_FLAG_CARRY
+}
+
 func (c *CPU) tax() {
 	c.registerX = c.registerA
 	c.updateZeroAndNegativeFlags(c.registerX)
@@ -306,6 +311,8 @@ func (c *CPU) Run() {
 			c.bvc()
 		case "BVS":
 			c.bvs()
+		case "CLC":
+			c.clc()
 		}
 		c.programCounter += uint16(opsInfo.Length - 1)
 	}
@@ -351,6 +358,8 @@ func (c *CPU) getOperandAddress(mode AddressingMode) uint16 {
 			address = uint16(address) - uint16(0x100)
 		}
 		return address
+	case IMPLIED:
+		return 0
 	default:
 		panic(fmt.Sprintf("unknown addressing mode: %d", mode))
 	}

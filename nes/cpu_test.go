@@ -614,3 +614,27 @@ func TestCPUBVS(t *testing.T) {
 		})
 	}
 }
+
+// CLCのテストコードを生成する
+func TestCPUClearCarryFlag(t *testing.T) {
+	cases := []struct {
+		name         string
+		program      []uint8
+		expectStatus uint8
+	}{
+		{
+			name:         "CLC",
+			program:      []uint8{0xa9, 0xff, 0x69, 0x02, 0x18, 0x00},
+			expectStatus: 0b0000_0000,
+		},
+	}
+
+	for _, tt := range cases {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			cpu := NewCPU()
+			cpu.LoadAndRun(tt.program)
+			assert.Equal(t, tt.expectStatus, cpu.status)
+		})
+	}
+}
