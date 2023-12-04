@@ -104,6 +104,10 @@ var CPU_OPS_CODES map[uint8]OpeCode = map[uint8]OpeCode{
 	0x81: {Mnemonic: "STA", Length: 2, Cycles: 6, Mode: INDIRECT_X},
 	0x91: {Mnemonic: "STA", Length: 2, Cycles: 6, Mode: INDIRECT_Y},
 
+	0x86: {Mnemonic: "STX", Length: 2, Cycles: 3, Mode: ZERO_PAGE},
+	0x96: {Mnemonic: "STX", Length: 2, Cycles: 4, Mode: ZERO_PAGE_Y},
+	0x8e: {Mnemonic: "STX", Length: 3, Cycles: 4, Mode: ABSOLUTE},
+
 	0xaa: {Mnemonic: "TAX", Length: 1, Cycles: 2, Mode: IMPLIED},
 	0xa8: {Mnemonic: "TAY", Length: 1, Cycles: 2, Mode: IMPLIED},
 }
