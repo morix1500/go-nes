@@ -12,6 +12,7 @@ const (
 	ABSOLUTE
 	ABSOLUTE_X
 	ABSOLUTE_Y
+	INDIRECT
 	INDIRECT_X
 	INDIRECT_Y
 	ACCUMULATOR
@@ -310,6 +311,31 @@ func (c *CPU) iny() {
 	c.updateZeroAndNegativeFlags(c.registerY)
 }
 
+func (c *CPU) jmp(mode AddressingMode) {
+	addr := c.getOperandAddress(mode)
+
+	if mode == ABSOLUTE {
+		c.programCounter = addr
+		return
+	}
+
+	// An original 6502 has does not correctly fetch the target address
+	// if the indirect vector falls on a page boundary (e.g. $xxFF where xx is any value from $00 to $FF).
+	// In this case fetches the LSB from $xxFF as expected but takes the MSB from $xx00.
+	// This is fixed in some later chips like the 65SC02 so for compatibility always ensure
+	// the indirect vector is not at the end of the page.
+	var indirectAddr uint16
+	if addr&0x00ff == 0x00ff {
+		lo := c.readMemory(addr)
+		hi := c.readMemory(addr & 0xff00)
+		indirectAddr = uint16(hi)<<8 | uint16(lo)
+	} else {
+		indirectAddr = addr
+	}
+
+	c.programCounter = indirectAddr
+}
+
 func (c *CPU) ora(mode AddressingMode) {
 	addr := c.getOperandAddress(mode)
 	c.setRegisterA(c.registerA | c.readMemory(addr))
@@ -397,6 +423,7 @@ func (c *CPU) Run() {
 	for {
 		code := c.readMemory(c.programCounter)
 		c.programCounter++
+		programCounterState := c.programCounter
 
 		if opsInfo, ok = CPU_OPS_CODES[code]; !ok {
 			panic(fmt.Sprintf("unknown code: %d", code))
@@ -457,6 +484,8 @@ func (c *CPU) Run() {
 			c.inx()
 		case "INY":
 			c.iny()
+		case "JMP":
+			c.jmp(opsInfo.Mode)
 		case "LDA":
 			c.lda(opsInfo.Mode)
 		case "LDX":
@@ -480,7 +509,9 @@ func (c *CPU) Run() {
 		case "TAY":
 			c.tay()
 		}
-		c.programCounter += uint16(opsInfo.Length - 1)
+		if programCounterState == c.programCounter {
+			c.programCounter += uint16(opsInfo.Length - 1)
+		}
 	}
 }
 
@@ -500,6 +531,8 @@ func (c *CPU) getOperandAddress(mode AddressingMode) uint16 {
 		return c.readMemory16(c.programCounter) + uint16(c.registerX)
 	case ABSOLUTE_Y:
 		return c.readMemory16(c.programCounter) + uint16(c.registerY)
+	case INDIRECT:
+		return c.readMemory16(c.programCounter)
 	case INDIRECT_X:
 		base := c.readMemory16(c.programCounter)
 		ptr := uint8(base + uint16(c.registerX))

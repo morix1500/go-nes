@@ -90,6 +90,9 @@ var CPU_OPS_CODES map[uint8]OpeCode = map[uint8]OpeCode{
 	0xe8: {Mnemonic: "INX", Length: 1, Cycles: 2, Mode: IMPLIED},
 	0xc8: {Mnemonic: "INY", Length: 1, Cycles: 2, Mode: IMPLIED},
 
+	0x4c: {Mnemonic: "JMP", Length: 3, Cycles: 3, Mode: ABSOLUTE},
+	0x6c: {Mnemonic: "JMP", Length: 3, Cycles: 5, Mode: INDIRECT},
+
 	0xa9: {Mnemonic: "LDA", Length: 2, Cycles: 2, Mode: IMMEDIATE},
 	0xa5: {Mnemonic: "LDA", Length: 2, Cycles: 3, Mode: ZERO_PAGE},
 	0xb5: {Mnemonic: "LDA", Length: 2, Cycles: 4, Mode: ZERO_PAGE_X},
