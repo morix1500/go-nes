@@ -1122,3 +1122,35 @@ func TestCPUJMP(t *testing.T) {
 		})
 	}
 }
+
+func TestCPUJSR(t *testing.T) {
+	cases := []struct {
+		name        string
+		memory      map[uint16]uint8
+		program     []uint8
+		expectPC    uint16
+		expectStack map[uint16]uint8
+	}{
+		{
+			name:        "JSR",
+			program:     []uint8{0x20, 0x05, 0x80, 0x00},
+			expectPC:    uint16(0x8006),
+			expectStack: map[uint16]uint8{0x01fd: 0x80, 0x01fc: 0x02},
+		},
+	}
+
+	for _, tt := range cases {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			cpu := NewCPU()
+			for addr, value := range tt.memory {
+				cpu.writeMemory(addr, value)
+			}
+			cpu.LoadAndRun(tt.program)
+			assert.Equal(t, tt.expectPC, cpu.programCounter)
+			for addr, value := range tt.expectStack {
+				assert.Equal(t, value, cpu.readMemory(addr))
+			}
+		})
+	}
+}

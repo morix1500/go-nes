@@ -38,6 +38,7 @@ type CPU struct {
 	registerY      uint8
 	status         uint8
 	programCounter uint16
+	stackPointer   uint8
 	memory         [0xFFFF]uint8
 }
 
@@ -48,6 +49,7 @@ func NewCPU() *CPU {
 		registerY:      0,
 		status:         0,
 		programCounter: 0,
+		stackPointer:   0xfd,
 	}
 }
 
@@ -336,6 +338,13 @@ func (c *CPU) jmp(mode AddressingMode) {
 	c.programCounter = indirectAddr
 }
 
+func (c *CPU) jsr() {
+	addr := c.getOperandAddress(ABSOLUTE)
+	// 2バイト加算している理由は、JSR命令の次の命令を実行するため
+	c.stackPush16(c.programCounter + 2 - 1)
+	c.programCounter = addr
+}
+
 func (c *CPU) ora(mode AddressingMode) {
 	addr := c.getOperandAddress(mode)
 	c.setRegisterA(c.registerA | c.readMemory(addr))
@@ -399,6 +408,29 @@ func (c *CPU) setRegisterA(value uint8) {
 	c.updateZeroAndNegativeFlags(c.registerA)
 }
 
+func (c *CPU) stackPush(value uint8) {
+	c.writeMemory(0x0100+uint16(c.stackPointer), value)
+	c.stackPointer--
+}
+
+func (c *CPU) stackPop() uint8 {
+	c.stackPointer++
+	return c.readMemory(0x0100 + uint16(c.stackPointer))
+}
+
+func (c *CPU) stackPush16(value uint16) {
+	hi := uint8(value >> 8)
+	lo := uint8(value & 0xff)
+	c.stackPush(hi)
+	c.stackPush(lo)
+}
+
+func (c *CPU) stackPop16() uint16 {
+	lo := uint16(c.stackPop())
+	hi := uint16(c.stackPop())
+	return (hi << 8) | lo
+}
+
 func (c *CPU) LoadAndRun(program []uint8) {
 	c.Load(program)
 	c.Reset()
@@ -413,8 +445,10 @@ func (c *CPU) Load(program []uint8) {
 func (c *CPU) Reset() {
 	c.registerA = 0
 	c.registerX = 0
+	c.registerY = 0
 	c.status = 0
 	c.programCounter = c.readMemory16(0xFFFC)
+	c.stackPointer = 0xfd
 }
 
 func (c *CPU) Run() {
@@ -486,6 +520,8 @@ func (c *CPU) Run() {
 			c.iny()
 		case "JMP":
 			c.jmp(opsInfo.Mode)
+		case "JSR":
+			c.jsr()
 		case "LDA":
 			c.lda(opsInfo.Mode)
 		case "LDX":
