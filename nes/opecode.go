@@ -125,6 +125,8 @@ var CPU_OPS_CODES map[uint8]OpeCode = map[uint8]OpeCode{
 	0x01: {Mnemonic: "ORA", Length: 2, Cycles: 6, Mode: INDIRECT_X},
 	0x11: {Mnemonic: "ORA", Length: 2, Cycles: 5 /* +1 if page crossed*/, Mode: INDIRECT_Y},
 
+	0x60: {Mnemonic: "RTS", Length: 1, Cycles: 6, Mode: IMPLIED},
+
 	0xf8: {Mnemonic: "SED", Length: 1, Cycles: 2, Mode: IMPLIED},
 	0x78: {Mnemonic: "SEI", Length: 1, Cycles: 2, Mode: IMPLIED},
 

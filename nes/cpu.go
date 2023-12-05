@@ -350,6 +350,10 @@ func (c *CPU) ora(mode AddressingMode) {
 	c.setRegisterA(c.registerA | c.readMemory(addr))
 }
 
+func (c *CPU) rts() {
+	c.programCounter = c.stackPop16() + 1
+}
+
 func (c *CPU) sed() {
 	c.status |= CPU_FLAG_DECIMAL_MODE
 }
@@ -530,6 +534,8 @@ func (c *CPU) Run() {
 			c.ldy(opsInfo.Mode)
 		case "ORA":
 			c.ora(opsInfo.Mode)
+		case "RTS":
+			c.rts()
 		case "SED":
 			c.sed()
 		case "SEI":

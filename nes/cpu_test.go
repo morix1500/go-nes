@@ -1154,3 +1154,31 @@ func TestCPUJSR(t *testing.T) {
 		})
 	}
 }
+
+func TestCPURTS(t *testing.T) {
+	cases := []struct {
+		name     string
+		memory   map[uint16]uint8
+		program  []uint8
+		expectPC uint16
+	}{
+		{
+			name:     "RTS",
+			memory:   map[uint16]uint8{0x8005: 0x60},
+			program:  []uint8{0x20, 0x05, 0x80, 0x00},
+			expectPC: uint16(0x8004),
+		},
+	}
+
+	for _, tt := range cases {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			cpu := NewCPU()
+			for addr, value := range tt.memory {
+				cpu.writeMemory(addr, value)
+			}
+			cpu.LoadAndRun(tt.program)
+			assert.Equal(t, tt.expectPC, cpu.programCounter)
+		})
+	}
+}
