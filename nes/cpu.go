@@ -377,6 +377,10 @@ func (c *CPU) pha() {
 	c.stackPush(c.registerA)
 }
 
+func (c *CPU) pla() {
+	c.setRegisterA(c.stackPop())
+}
+
 func (c *CPU) rts() {
 	c.programCounter = c.stackPop16() + 1
 }
@@ -567,6 +571,8 @@ func (c *CPU) Run() {
 			c.ora(opsInfo.Mode)
 		case "PHA":
 			c.pha()
+		case "PLA":
+			c.pla()
 		case "RTS":
 			c.rts()
 		case "SED":

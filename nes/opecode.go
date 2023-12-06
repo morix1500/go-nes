@@ -125,6 +125,7 @@ var CPU_OPS_CODES map[uint8]OpeCode = map[uint8]OpeCode{
 	0xea: {Mnemonic: "NOP", Length: 1, Cycles: 2, Mode: IMPLIED},
 
 	0x48: {Mnemonic: "PHA", Length: 1, Cycles: 3, Mode: IMPLIED},
+	0x68: {Mnemonic: "PLA", Length: 1, Cycles: 4, Mode: IMPLIED},
 
 	0x09: {Mnemonic: "ORA", Length: 2, Cycles: 2, Mode: IMMEDIATE},
 	0x05: {Mnemonic: "ORA", Length: 2, Cycles: 3, Mode: ZERO_PAGE},

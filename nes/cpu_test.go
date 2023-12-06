@@ -1289,3 +1289,33 @@ func TestCPUPHA(t *testing.T) {
 		})
 	}
 }
+
+func TestCPUPLA(t *testing.T) {
+	cases := []struct {
+		name            string
+		memory          map[uint16]uint8
+		program         []uint8
+		expectRegisterA uint8
+	}{
+		{
+			name:            "PHL",
+			memory:          map[uint16]uint8{0x10: 0x05},
+			program:         []uint8{0xa9, 0x05, 0x48, 0xa9, 0x1a, 0x68, 0x00},
+			expectRegisterA: 0x05,
+		},
+	}
+
+	for _, tt := range cases {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			cpu := NewCPU()
+
+			for addr, value := range tt.memory {
+				cpu.writeMemory(addr, value)
+			}
+			cpu.LoadAndRun(tt.program)
+			assert.Equal(t, tt.expectRegisterA, cpu.registerA)
+
+		})
+	}
+}
