@@ -444,6 +444,11 @@ func (c *CPU) ror(mode AddressingMode) {
 	c.updateZeroAndNegativeFlags(value)
 }
 
+func (c *CPU) rti() {
+	c.status = c.stackPop()&^CPU_FLAG_BREAK | CPU_FLAG_BREAK2
+	c.programCounter = c.stackPop16()
+}
+
 func (c *CPU) rts() {
 	c.programCounter = c.stackPop16() + 1
 }
@@ -648,6 +653,8 @@ func (c *CPU) Run() {
 			c.rol(opsInfo.Mode)
 		case "ROR":
 			c.ror(opsInfo.Mode)
+		case "RTI":
+			c.rti()
 		case "RTS":
 			c.rts()
 		case "SEC":

@@ -1535,3 +1535,19 @@ func TestCPUROR(t *testing.T) {
 		})
 	}
 }
+
+func TestCPURTI(t *testing.T) {
+	cpu := NewCPU()
+	cpu.memory[0x01fd] = 0x80
+	cpu.memory[0x01fc] = 0x11
+	cpu.memory[0x01fb] = 0b1000_0011
+
+	program := []uint8{0x40, 0x00}
+	cpu.Load(program)
+	cpu.programCounter = cpu.readMemory16(0xFFFC)
+	cpu.stackPointer = 0xfa
+	cpu.Run()
+
+	assert.Equal(t, uint8(0b1010_0011), cpu.status)
+	assert.Equal(t, uint16(0x8012), cpu.programCounter)
+}
