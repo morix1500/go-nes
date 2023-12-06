@@ -144,6 +144,12 @@ var CPU_OPS_CODES map[uint8]OpeCode = map[uint8]OpeCode{
 	0x2e: {Mnemonic: "ROL", Length: 3, Cycles: 6, Mode: ABSOLUTE},
 	0x3e: {Mnemonic: "ROL", Length: 3, Cycles: 7, Mode: ABSOLUTE_X},
 
+	0x6a: {Mnemonic: "ROR", Length: 1, Cycles: 2, Mode: ACCUMULATOR},
+	0x66: {Mnemonic: "ROR", Length: 2, Cycles: 5, Mode: ZERO_PAGE},
+	0x76: {Mnemonic: "ROR", Length: 2, Cycles: 6, Mode: ZERO_PAGE_X},
+	0x6e: {Mnemonic: "ROR", Length: 3, Cycles: 6, Mode: ABSOLUTE},
+	0x7e: {Mnemonic: "ROR", Length: 3, Cycles: 7, Mode: ABSOLUTE_X},
+
 	0x60: {Mnemonic: "RTS", Length: 1, Cycles: 6, Mode: IMPLIED},
 
 	0x38: {Mnemonic: "SEC", Length: 1, Cycles: 2, Mode: IMPLIED},

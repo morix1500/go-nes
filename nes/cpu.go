@@ -416,6 +416,34 @@ func (c *CPU) rol(mode AddressingMode) {
 	c.updateZeroAndNegativeFlags(value)
 }
 
+func (c *CPU) ror(mode AddressingMode) {
+	oldCarry := c.status & CPU_FLAG_CARRY
+	oldCarry <<= 7
+
+	if mode == ACCUMULATOR {
+		if c.registerA&CPU_FLAG_CARRY != 0 {
+			c.status |= CPU_FLAG_CARRY
+		} else {
+			c.status &= ^CPU_FLAG_CARRY
+		}
+
+		c.setRegisterA(c.registerA>>1 | oldCarry)
+		return
+	}
+
+	addr := c.getOperandAddress(mode)
+	value := c.readMemory(addr)
+	if value&CPU_FLAG_CARRY != 0 {
+		c.status |= CPU_FLAG_CARRY
+	} else {
+		c.status &= ^CPU_FLAG_CARRY
+	}
+	value >>= 1
+	value |= oldCarry
+	c.writeMemory(addr, value)
+	c.updateZeroAndNegativeFlags(value)
+}
+
 func (c *CPU) rts() {
 	c.programCounter = c.stackPop16() + 1
 }
@@ -618,6 +646,8 @@ func (c *CPU) Run() {
 			c.plp()
 		case "ROL":
 			c.rol(opsInfo.Mode)
+		case "ROR":
+			c.ror(opsInfo.Mode)
 		case "RTS":
 			c.rts()
 		case "SEC":

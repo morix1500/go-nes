@@ -1397,16 +1397,19 @@ func TestCPUROLAccumulator(t *testing.T) {
 		name            string
 		program         []uint8
 		expectRegisterA uint8
+		expectStatus    uint8
 	}{
 		{
 			name:            "ROL Accumulator",
 			program:         []uint8{0xa9, 0x04, 0x2a, 0x00},
 			expectRegisterA: uint8(0x08),
+			expectStatus:    0b0000_0000,
 		},
 		{
 			name:            "ROL Accumulator with carry",
 			program:         []uint8{0xa9, 0x85, 0x38, 0x2a, 0x00},
 			expectRegisterA: uint8(0b0000_1011),
+			expectStatus:    0b0000_0001,
 		},
 	}
 
@@ -1417,6 +1420,7 @@ func TestCPUROLAccumulator(t *testing.T) {
 
 			cpu.LoadAndRun(tt.program)
 			assert.Equal(t, tt.expectRegisterA, cpu.registerA)
+			assert.Equal(t, tt.expectStatus, cpu.status)
 		})
 	}
 }
@@ -1427,16 +1431,19 @@ func TestCPUROL(t *testing.T) {
 		memory       map[uint16]uint8
 		program      []uint8
 		expectMemory map[uint16]uint8
+		expectStatus uint8
 	}{
 		{
 			name:         "ROL ZeroPage",
 			program:      []uint8{0xa9, 0x04, 0x85, 0xb1, 0x26, 0xb1, 0x00},
 			expectMemory: map[uint16]uint8{0xb1: 0x08},
+			expectStatus: 0b0000_0000,
 		},
 		{
 			name:         "ROL ZeroPage with carry",
 			program:      []uint8{0xa9, 0x85, 0x85, 0xb1, 0x38, 0x26, 0xb1, 0x00},
 			expectMemory: map[uint16]uint8{0xb1: 0b0000_1011},
+			expectStatus: 0b0000_0001,
 		},
 	}
 
@@ -1452,6 +1459,79 @@ func TestCPUROL(t *testing.T) {
 			for addr, value := range tt.expectMemory {
 				assert.Equal(t, value, cpu.readMemory(addr))
 			}
+			assert.Equal(t, tt.expectStatus, cpu.status)
+		})
+	}
+}
+
+func TestCPURORAccumulator(t *testing.T) {
+	cases := []struct {
+		name            string
+		program         []uint8
+		expectRegisterA uint8
+		expectStatus    uint8
+	}{
+		{
+			name:            "ROR Accumulator",
+			program:         []uint8{0xa9, 0x04, 0x6a, 0x00},
+			expectRegisterA: uint8(0x02),
+			expectStatus:    0b0000_0000,
+		},
+		{
+			name:            "ROR Accumulator with carry",
+			program:         []uint8{0xa9, 0x85, 0x38, 0x6a, 0x00},
+			expectRegisterA: uint8(0b1100_0010),
+			expectStatus:    0b1000_0001,
+		},
+	}
+
+	for _, tt := range cases {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			cpu := NewCPU()
+
+			cpu.LoadAndRun(tt.program)
+			assert.Equal(t, tt.expectRegisterA, cpu.registerA)
+			assert.Equal(t, tt.expectStatus, cpu.status)
+		})
+	}
+}
+
+func TestCPUROR(t *testing.T) {
+	cases := []struct {
+		name         string
+		memory       map[uint16]uint8
+		program      []uint8
+		expectMemory map[uint16]uint8
+		expectStatus uint8
+	}{
+		{
+			name:         "ROR ZeroPage",
+			program:      []uint8{0xa9, 0x04, 0x85, 0xb1, 0x66, 0xb1, 0x00},
+			expectMemory: map[uint16]uint8{0xb1: 0x02},
+			expectStatus: 0b0000_0000,
+		},
+		{
+			name:         "ROR ZeroPage with carry",
+			program:      []uint8{0xa9, 0x85, 0x85, 0xb1, 0x38, 0x66, 0xb1, 0x00},
+			expectMemory: map[uint16]uint8{0xb1: 0b1100_0010},
+			expectStatus: 0b1000_0001,
+		},
+	}
+
+	for _, tt := range cases {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			cpu := NewCPU()
+			for addr, value := range tt.memory {
+				cpu.writeMemory(addr, value)
+			}
+
+			cpu.LoadAndRun(tt.program)
+			for addr, value := range tt.expectMemory {
+				assert.Equal(t, value, cpu.readMemory(addr))
+			}
+			assert.Equal(t, tt.expectStatus, cpu.status)
 		})
 	}
 }
