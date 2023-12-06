@@ -1257,3 +1257,35 @@ func TestCPULSR(t *testing.T) {
 		})
 	}
 }
+
+func TestCPUPHA(t *testing.T) {
+	cases := []struct {
+		name        string
+		memory      map[uint16]uint8
+		program     []uint8
+		expectStack map[uint16]uint8
+	}{
+		{
+			name:        "PHA",
+			memory:      map[uint16]uint8{0x10: 0x05},
+			program:     []uint8{0xa9, 0x05, 0x48, 0x00},
+			expectStack: map[uint16]uint8{0x01fd: 0x05},
+		},
+	}
+
+	for _, tt := range cases {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			cpu := NewCPU()
+
+			for addr, value := range tt.memory {
+				cpu.writeMemory(addr, value)
+			}
+			cpu.LoadAndRun(tt.program)
+
+			for addr, value := range tt.expectStack {
+				assert.Equal(t, value, cpu.readMemory(addr))
+			}
+		})
+	}
+}

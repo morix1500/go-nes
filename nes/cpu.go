@@ -373,6 +373,10 @@ func (c *CPU) ora(mode AddressingMode) {
 	c.setRegisterA(c.registerA | c.readMemory(addr))
 }
 
+func (c *CPU) pha() {
+	c.stackPush(c.registerA)
+}
+
 func (c *CPU) rts() {
 	c.programCounter = c.stackPop16() + 1
 }
@@ -561,6 +565,8 @@ func (c *CPU) Run() {
 			// 何もしない
 		case "ORA":
 			c.ora(opsInfo.Mode)
+		case "PHA":
+			c.pha()
 		case "RTS":
 			c.rts()
 		case "SED":
