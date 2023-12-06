@@ -1182,3 +1182,78 @@ func TestCPURTS(t *testing.T) {
 		})
 	}
 }
+
+func TestCPULSRAccumulator(t *testing.T) {
+	cases := []struct {
+		name            string
+		memory          map[uint16]uint8
+		program         []uint8
+		expectRegisterA uint8
+		expectStatus    uint8
+	}{
+		{
+			name:            "LSR Accumulator",
+			program:         []uint8{0xa9, 0x04, 0x4a, 0x00},
+			expectRegisterA: uint8(0x02),
+			expectStatus:    0b0000_0000,
+		},
+		{
+			name:            "LSR Accumulator with carry",
+			program:         []uint8{0xa9, 0x05, 0x4a, 0x00},
+			expectRegisterA: uint8(0x02),
+			expectStatus:    0b0000_0001,
+		},
+	}
+
+	for _, tt := range cases {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			cpu := NewCPU()
+			for addr, value := range tt.memory {
+				cpu.writeMemory(addr, value)
+			}
+			cpu.LoadAndRun(tt.program)
+			assert.Equal(t, tt.expectStatus, cpu.status)
+		})
+	}
+}
+
+func TestCPULSR(t *testing.T) {
+	cases := []struct {
+		name         string
+		memory       map[uint16]uint8
+		program      []uint8
+		expectMemory map[uint16]uint8
+		expectStatus uint8
+	}{
+		{
+			name:         "LSR ZeroPage",
+			memory:       map[uint16]uint8{},
+			program:      []uint8{0xa9, 0x04, 0x85, 0x0a, 0x46, 0x0a, 0x00},
+			expectMemory: map[uint16]uint8{0x0a: 0x02},
+			expectStatus: 0b0000_0000,
+		},
+		{
+			name:         "LSR ZeroPage with carry",
+			memory:       map[uint16]uint8{0x10: 0xff},
+			program:      []uint8{0xa9, 0x05, 0x85, 0x0a, 0x46, 0x0a, 0x00},
+			expectMemory: map[uint16]uint8{0x0a: 0x02},
+			expectStatus: 0b0000_0001,
+		},
+	}
+
+	for _, tt := range cases {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			cpu := NewCPU()
+			for addr, value := range tt.memory {
+				cpu.writeMemory(addr, value)
+			}
+			cpu.LoadAndRun(tt.program)
+			for addr, value := range tt.expectMemory {
+				assert.Equal(t, value, cpu.readMemory(addr))
+			}
+			assert.Equal(t, tt.expectStatus, cpu.status)
+		})
+	}
+}

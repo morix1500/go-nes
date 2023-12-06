@@ -145,21 +145,21 @@ func (c *CPU) asl(mode AddressingMode) {
 func (c *CPU) bcc() {
 	if c.status&CPU_FLAG_CARRY == 0 {
 		addr := c.getOperandAddress(RELATIVE)
-		c.programCounter += addr
+		c.programCounter += addr + 1
 	}
 }
 
 func (c *CPU) bcs() {
 	if c.status&CPU_FLAG_CARRY != 0 {
 		addr := c.getOperandAddress(RELATIVE)
-		c.programCounter += addr
+		c.programCounter += addr + 1
 	}
 }
 
 func (c *CPU) beq() {
 	if c.status&CPU_FLAG_ZERO != 0 {
 		addr := c.getOperandAddress(RELATIVE)
-		c.programCounter += addr
+		c.programCounter += addr + 1
 	}
 }
 
@@ -188,35 +188,35 @@ func (c *CPU) bit(mode AddressingMode) {
 func (c *CPU) bmi() {
 	if c.status&CPU_FLAG_NEGATIVE != 0 {
 		addr := c.getOperandAddress(RELATIVE)
-		c.programCounter += addr
+		c.programCounter += addr + 1
 	}
 }
 
 func (c *CPU) bne() {
 	if c.status&CPU_FLAG_ZERO == 0 {
 		addr := c.getOperandAddress(RELATIVE)
-		c.programCounter += addr
+		c.programCounter += addr + 1
 	}
 }
 
 func (c *CPU) bpl() {
 	if c.status&CPU_FLAG_NEGATIVE == 0 {
 		addr := c.getOperandAddress(RELATIVE)
-		c.programCounter += addr
+		c.programCounter += addr + 1
 	}
 }
 
 func (c *CPU) bvc() {
 	if c.status&CPU_FLAG_OVERFLOW == 0 {
 		addr := c.getOperandAddress(RELATIVE)
-		c.programCounter += addr
+		c.programCounter += addr + 1
 	}
 }
 
 func (c *CPU) bvs() {
 	if c.status&CPU_FLAG_OVERFLOW != 0 {
 		addr := c.getOperandAddress(RELATIVE)
-		c.programCounter += addr
+		c.programCounter += addr + 1
 	}
 }
 
@@ -343,6 +343,29 @@ func (c *CPU) jsr() {
 	// 2バイト加算している理由は、JSR命令の次の命令を実行するため
 	c.stackPush16(c.programCounter + 2 - 1)
 	c.programCounter = addr
+}
+
+func (c *CPU) lsr(mode AddressingMode) {
+	if mode == ACCUMULATOR {
+		if c.registerA&CPU_FLAG_CARRY != 0 {
+			c.status |= CPU_FLAG_CARRY
+		} else {
+			c.status &= ^CPU_FLAG_CARRY
+		}
+		c.setRegisterA(c.registerA >> 1)
+		return
+	}
+
+	addr := c.getOperandAddress(mode)
+	value := c.readMemory(addr)
+	if value&CPU_FLAG_CARRY != 0 {
+		c.status |= CPU_FLAG_CARRY
+	} else {
+		c.status &= ^CPU_FLAG_CARRY
+	}
+	value >>= 1
+	c.writeMemory(addr, value)
+	c.updateZeroAndNegativeFlags(value)
 }
 
 func (c *CPU) ora(mode AddressingMode) {
@@ -532,6 +555,8 @@ func (c *CPU) Run() {
 			c.ldx(opsInfo.Mode)
 		case "LDY":
 			c.ldy(opsInfo.Mode)
+		case "LSR":
+			c.lsr(opsInfo.Mode)
 		case "ORA":
 			c.ora(opsInfo.Mode)
 		case "RTS":
