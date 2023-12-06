@@ -377,8 +377,17 @@ func (c *CPU) pha() {
 	c.stackPush(c.registerA)
 }
 
+func (c *CPU) php() {
+	// https://www.nesdev.org/wiki/Status_flags#The_B_flag
+	c.stackPush(c.status | CPU_FLAG_BREAK | CPU_FLAG_BREAK2)
+}
+
 func (c *CPU) pla() {
 	c.setRegisterA(c.stackPop())
+}
+
+func (c *CPU) plp() {
+	c.status = c.stackPop()&^CPU_FLAG_BREAK | CPU_FLAG_BREAK2
 }
 
 func (c *CPU) rts() {
@@ -571,8 +580,12 @@ func (c *CPU) Run() {
 			c.ora(opsInfo.Mode)
 		case "PHA":
 			c.pha()
+		case "PHP":
+			c.php()
 		case "PLA":
 			c.pla()
+		case "PLP":
+			c.plp()
 		case "RTS":
 			c.rts()
 		case "SED":

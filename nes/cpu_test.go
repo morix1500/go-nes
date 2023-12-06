@@ -1319,3 +1319,52 @@ func TestCPUPLA(t *testing.T) {
 		})
 	}
 }
+
+func TestCPUPHP(t *testing.T) {
+	cases := []struct {
+		name        string
+		program     []uint8
+		expectStack map[uint16]uint8
+	}{
+		{
+			name:        "PHP",
+			program:     []uint8{0xa9, 0x00, 0x08, 0x00},
+			expectStack: map[uint16]uint8{0x01fd: 0b0011_0010},
+		},
+	}
+
+	for _, tt := range cases {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			cpu := NewCPU()
+
+			cpu.LoadAndRun(tt.program)
+			for addr, value := range tt.expectStack {
+				assert.Equal(t, value, cpu.readMemory(addr))
+			}
+		})
+	}
+}
+
+func TestCPUPLP(t *testing.T) {
+	cases := []struct {
+		name         string
+		program      []uint8
+		expectStatus uint8
+	}{
+		{
+			name:         "PLP",
+			program:      []uint8{0xa9, 0x00, 0x08, 0xa9, 0x01, 0x28, 0x00},
+			expectStatus: uint8(0b0010_0010),
+		},
+	}
+
+	for _, tt := range cases {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			cpu := NewCPU()
+			cpu.LoadAndRun(tt.program)
+			assert.Equal(t, tt.expectStatus, cpu.status)
+		})
+	}
+}
