@@ -124,11 +124,6 @@ var CPU_OPS_CODES map[uint8]OpeCode = map[uint8]OpeCode{
 
 	0xea: {Mnemonic: "NOP", Length: 1, Cycles: 2, Mode: IMPLIED},
 
-	0x48: {Mnemonic: "PHA", Length: 1, Cycles: 3, Mode: IMPLIED},
-	0x08: {Mnemonic: "PHP", Length: 1, Cycles: 3, Mode: IMPLIED},
-	0x68: {Mnemonic: "PLA", Length: 1, Cycles: 4, Mode: IMPLIED},
-	0x28: {Mnemonic: "PLP", Length: 1, Cycles: 4, Mode: IMPLIED},
-
 	0x09: {Mnemonic: "ORA", Length: 2, Cycles: 2, Mode: IMMEDIATE},
 	0x05: {Mnemonic: "ORA", Length: 2, Cycles: 3, Mode: ZERO_PAGE},
 	0x15: {Mnemonic: "ORA", Length: 2, Cycles: 4, Mode: ZERO_PAGE_X},
@@ -138,8 +133,20 @@ var CPU_OPS_CODES map[uint8]OpeCode = map[uint8]OpeCode{
 	0x01: {Mnemonic: "ORA", Length: 2, Cycles: 6, Mode: INDIRECT_X},
 	0x11: {Mnemonic: "ORA", Length: 2, Cycles: 5 /* +1 if page crossed*/, Mode: INDIRECT_Y},
 
+	0x48: {Mnemonic: "PHA", Length: 1, Cycles: 3, Mode: IMPLIED},
+	0x08: {Mnemonic: "PHP", Length: 1, Cycles: 3, Mode: IMPLIED},
+	0x68: {Mnemonic: "PLA", Length: 1, Cycles: 4, Mode: IMPLIED},
+	0x28: {Mnemonic: "PLP", Length: 1, Cycles: 4, Mode: IMPLIED},
+
+	0x2a: {Mnemonic: "ROL", Length: 1, Cycles: 2, Mode: ACCUMULATOR},
+	0x26: {Mnemonic: "ROL", Length: 2, Cycles: 5, Mode: ZERO_PAGE},
+	0x36: {Mnemonic: "ROL", Length: 2, Cycles: 6, Mode: ZERO_PAGE_X},
+	0x2e: {Mnemonic: "ROL", Length: 3, Cycles: 6, Mode: ABSOLUTE},
+	0x3e: {Mnemonic: "ROL", Length: 3, Cycles: 7, Mode: ABSOLUTE_X},
+
 	0x60: {Mnemonic: "RTS", Length: 1, Cycles: 6, Mode: IMPLIED},
 
+	0x38: {Mnemonic: "SEC", Length: 1, Cycles: 2, Mode: IMPLIED},
 	0xf8: {Mnemonic: "SED", Length: 1, Cycles: 2, Mode: IMPLIED},
 	0x78: {Mnemonic: "SEI", Length: 1, Cycles: 2, Mode: IMPLIED},
 

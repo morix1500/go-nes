@@ -390,8 +390,38 @@ func (c *CPU) plp() {
 	c.status = c.stackPop()&^CPU_FLAG_BREAK | CPU_FLAG_BREAK2
 }
 
+func (c *CPU) rol(mode AddressingMode) {
+	oldCarry := c.status & CPU_FLAG_CARRY
+
+	if mode == ACCUMULATOR {
+		if c.registerA&0x80 != 0 {
+			c.status |= CPU_FLAG_CARRY
+		} else {
+			c.status &= ^CPU_FLAG_CARRY
+		}
+		c.setRegisterA(c.registerA<<1 | oldCarry)
+		return
+	}
+
+	addr := c.getOperandAddress(mode)
+	value := c.readMemory(addr)
+	if value&0x80 != 0 {
+		c.status |= CPU_FLAG_CARRY
+	} else {
+		c.status &= ^CPU_FLAG_CARRY
+	}
+	value <<= 1
+	value |= oldCarry
+	c.writeMemory(addr, value)
+	c.updateZeroAndNegativeFlags(value)
+}
+
 func (c *CPU) rts() {
 	c.programCounter = c.stackPop16() + 1
+}
+
+func (c *CPU) sec() {
+	c.status |= CPU_FLAG_CARRY
 }
 
 func (c *CPU) sed() {
@@ -586,8 +616,12 @@ func (c *CPU) Run() {
 			c.pla()
 		case "PLP":
 			c.plp()
+		case "ROL":
+			c.rol(opsInfo.Mode)
 		case "RTS":
 			c.rts()
+		case "SEC":
+			c.sec()
 		case "SED":
 			c.sed()
 		case "SEI":
