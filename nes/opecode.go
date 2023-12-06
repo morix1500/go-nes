@@ -122,6 +122,8 @@ var CPU_OPS_CODES map[uint8]OpeCode = map[uint8]OpeCode{
 	0x4e: {Mnemonic: "LSR", Length: 3, Cycles: 6, Mode: ABSOLUTE},
 	0x5e: {Mnemonic: "LSR", Length: 3, Cycles: 7, Mode: ABSOLUTE_X},
 
+	0xea: {Mnemonic: "NOP", Length: 1, Cycles: 2, Mode: IMPLIED},
+
 	0x09: {Mnemonic: "ORA", Length: 2, Cycles: 2, Mode: IMMEDIATE},
 	0x05: {Mnemonic: "ORA", Length: 2, Cycles: 3, Mode: ZERO_PAGE},
 	0x15: {Mnemonic: "ORA", Length: 2, Cycles: 4, Mode: ZERO_PAGE_X},
