@@ -503,6 +503,18 @@ func (c *CPU) tsx() {
 	c.updateZeroAndNegativeFlags(c.registerX)
 }
 
+func (c *CPU) txa() {
+	c.setRegisterA(c.registerX)
+}
+
+func (c *CPU) txs() {
+	c.stackPointer = c.registerX
+}
+
+func (c *CPU) tya() {
+	c.setRegisterA(c.registerY)
+}
+
 func (c *CPU) updateZeroAndNegativeFlags(result uint8) {
 	if result == 0 {
 		c.status |= CPU_FLAG_ZERO
@@ -705,6 +717,12 @@ func (c *CPU) Run() {
 			c.tay()
 		case "TSX":
 			c.tsx()
+		case "TXA":
+			c.txa()
+		case "TXS":
+			c.txs()
+		case "TYA":
+			c.tya()
 		}
 		if programCounterState == c.programCounter {
 			c.programCounter += uint16(opsInfo.Length - 1)

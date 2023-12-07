@@ -1612,3 +1612,33 @@ func TestCPUTSX(t *testing.T) {
 	cpu.Run()
 	assert.Equal(t, uint8(0x05), cpu.registerX)
 }
+
+func TestCPUTXA(t *testing.T) {
+	cpu := NewCPU()
+	cpu.registerX = 0x05
+	cpu.programCounter = 0x8000
+	program := []uint8{0x8a, 0x00}
+	cpu.Load(program)
+	cpu.Run()
+	assert.Equal(t, uint8(0x05), cpu.registerA)
+}
+
+func TestCPUTXS(t *testing.T) {
+	cpu := NewCPU()
+	cpu.registerX = 0x05
+	cpu.programCounter = 0x8000
+	program := []uint8{0x9a, 0x00}
+	cpu.Load(program)
+	cpu.Run()
+	assert.Equal(t, uint8(0x05), cpu.stackPointer)
+}
+
+func TestCPUTYA(t *testing.T) {
+	cpu := NewCPU()
+	cpu.registerY = 0x05
+	cpu.programCounter = 0x8000
+	program := []uint8{0x98, 0x00}
+	cpu.Load(program)
+	cpu.Run()
+	assert.Equal(t, uint8(0x05), cpu.registerA)
+}
