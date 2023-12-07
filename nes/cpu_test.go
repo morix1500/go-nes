@@ -1551,3 +1551,54 @@ func TestCPURTI(t *testing.T) {
 	assert.Equal(t, uint8(0b1010_0011), cpu.status)
 	assert.Equal(t, uint16(0x8012), cpu.programCounter)
 }
+
+func TestCPUSBC(t *testing.T) {
+	cases := []struct {
+		name            string
+		memory          map[uint16]uint8
+		program         []uint8
+		expectRegisterA uint8
+		expectStatus    uint8
+	}{
+		{
+			name:            "SBC Immediate",
+			program:         []uint8{0xa9, 0x05, 0xe9, 0x03, 0x00},
+			expectRegisterA: uint8(0x01),
+			expectStatus:    0b0000_0001,
+		},
+		{
+			name:            "SBC Immediate with carry",
+			program:         []uint8{0xa9, 0x05, 0x38, 0xe9, 0x05, 0x00},
+			expectRegisterA: uint8(0x00),
+			expectStatus:    0b0000_0011,
+		},
+		{
+			name:            "SBC Immediate with minux",
+			program:         []uint8{0xa9, 0x05, 0xe9, 0x05, 0x00},
+			expectRegisterA: uint8(0xff),
+			expectStatus:    0b1000_0000,
+		},
+
+		{
+			name:            "SBC Immediate with overflow",
+			program:         []uint8{0xa9, 0xb0, 0x38, 0xe9, 0x7f, 0x00},
+			expectRegisterA: uint8(0x31),
+			expectStatus:    0b0100_0001,
+		},
+	}
+
+	for _, tt := range cases {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			cpu := NewCPU()
+			for addr, value := range tt.memory {
+				cpu.writeMemory(addr, value)
+			}
+
+			cpu.LoadAndRun(tt.program)
+			assert.Equal(t, tt.expectRegisterA, cpu.registerA)
+			assert.Equal(t, tt.expectStatus, cpu.status)
+		})
+	}
+}

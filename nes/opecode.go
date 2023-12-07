@@ -152,6 +152,16 @@ var CPU_OPS_CODES map[uint8]OpeCode = map[uint8]OpeCode{
 
 	0x40: {Mnemonic: "RTI", Length: 1, Cycles: 6, Mode: IMPLIED},
 	0x60: {Mnemonic: "RTS", Length: 1, Cycles: 6, Mode: IMPLIED},
+
+	0xe9: {Mnemonic: "SBC", Length: 2, Cycles: 2, Mode: IMMEDIATE},
+	0xe5: {Mnemonic: "SBC", Length: 2, Cycles: 3, Mode: ZERO_PAGE},
+	0xf5: {Mnemonic: "SBC", Length: 2, Cycles: 4, Mode: ZERO_PAGE_X},
+	0xed: {Mnemonic: "SBC", Length: 3, Cycles: 4, Mode: ABSOLUTE},
+	0xfd: {Mnemonic: "SBC", Length: 3, Cycles: 4 /* +1 if page crossed*/, Mode: ABSOLUTE_X},
+	0xf9: {Mnemonic: "SBC", Length: 3, Cycles: 4 /* +1 if page crossed*/, Mode: ABSOLUTE_Y},
+	0xe1: {Mnemonic: "SBC", Length: 2, Cycles: 6, Mode: INDIRECT_X},
+	0xf1: {Mnemonic: "SBC", Length: 2, Cycles: 5 /* +1 if page crossed*/, Mode: INDIRECT_Y},
+
 	0x38: {Mnemonic: "SEC", Length: 1, Cycles: 2, Mode: IMPLIED},
 	0xf8: {Mnemonic: "SED", Length: 1, Cycles: 2, Mode: IMPLIED},
 	0x78: {Mnemonic: "SEI", Length: 1, Cycles: 2, Mode: IMPLIED},

@@ -453,6 +453,29 @@ func (c *CPU) rts() {
 	c.programCounter = c.stackPop16() + 1
 }
 
+func (cpu *CPU) sbc(mode AddressingMode) {
+	addr := cpu.getOperandAddress(mode)
+	a := cpu.registerA
+	b := cpu.readMemory(addr)
+	c := cpu.status & CPU_FLAG_CARRY
+
+	cpu.setRegisterA(a - b - (1 - c))
+
+	// 引き算の結果が0未満の場合、キャリーフラグをクリアします。それ以外の場合はキャリーフラグをセットします。
+	if int(a)-int(b)-int(1-c) >= 0 {
+		cpu.status |= CPU_FLAG_CARRY
+	} else {
+		cpu.status &= ^CPU_FLAG_CARRY
+	}
+
+	// 異なる符号同士の演算かつ計算結果の符号が 1 つ目の整数の符号と異なる場合オーバーフローとなる
+	if (a^b)&0x80 != 0 && (a^cpu.registerA)&0x80 != 0 {
+		cpu.status |= CPU_FLAG_OVERFLOW
+	} else {
+		cpu.status &= ^CPU_FLAG_OVERFLOW
+	}
+}
+
 func (c *CPU) sec() {
 	c.status |= CPU_FLAG_CARRY
 }
@@ -657,6 +680,8 @@ func (c *CPU) Run() {
 			c.rti()
 		case "RTS":
 			c.rts()
+		case "SBC":
+			c.sbc(opsInfo.Mode)
 		case "SEC":
 			c.sec()
 		case "SED":
