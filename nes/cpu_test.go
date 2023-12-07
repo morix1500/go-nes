@@ -1602,3 +1602,13 @@ func TestCPUSBC(t *testing.T) {
 		})
 	}
 }
+
+func TestCPUTSX(t *testing.T) {
+	cpu := NewCPU()
+	cpu.stackPointer = 0x05
+	cpu.programCounter = 0x8000
+	program := []uint8{0xba, 0x00}
+	cpu.Load(program)
+	cpu.Run()
+	assert.Equal(t, uint8(0x05), cpu.registerX)
+}

@@ -182,4 +182,5 @@ var CPU_OPS_CODES map[uint8]OpeCode = map[uint8]OpeCode{
 
 	0xaa: {Mnemonic: "TAX", Length: 1, Cycles: 2, Mode: IMPLIED},
 	0xa8: {Mnemonic: "TAY", Length: 1, Cycles: 2, Mode: IMPLIED},
+	0xba: {Mnemonic: "TSX", Length: 1, Cycles: 2, Mode: IMPLIED},
 }

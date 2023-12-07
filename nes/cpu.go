@@ -498,6 +498,11 @@ func (c *CPU) tay() {
 	c.updateZeroAndNegativeFlags(c.registerY)
 }
 
+func (c *CPU) tsx() {
+	c.registerX = c.stackPointer
+	c.updateZeroAndNegativeFlags(c.registerX)
+}
+
 func (c *CPU) updateZeroAndNegativeFlags(result uint8) {
 	if result == 0 {
 		c.status |= CPU_FLAG_ZERO
@@ -698,6 +703,8 @@ func (c *CPU) Run() {
 			c.tax()
 		case "TAY":
 			c.tay()
+		case "TSX":
+			c.tsx()
 		}
 		if programCounterState == c.programCounter {
 			c.programCounter += uint16(opsInfo.Length - 1)
