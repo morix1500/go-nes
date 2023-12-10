@@ -39,10 +39,10 @@ type CPU struct {
 	status         uint8
 	programCounter uint16
 	stackPointer   uint8
-	memory         [0xFFFF]uint8
+	bus            *Bus
 }
 
-func NewCPU() *CPU {
+func NewCPU(bus *Bus) *CPU {
 	return &CPU{
 		registerA:      0,
 		registerX:      0,
@@ -50,6 +50,7 @@ func NewCPU() *CPU {
 		status:         0,
 		programCounter: 0,
 		stackPointer:   0xfd,
+		bus:            bus,
 	}
 }
 
@@ -530,7 +531,7 @@ func (c *CPU) updateZeroAndNegativeFlags(result uint8) {
 }
 
 func (c *CPU) readMemory(address uint16) uint8 {
-	return c.memory[address]
+	return c.bus.ReadMemory(address)
 }
 
 func (c *CPU) readMemory16(address uint16) uint16 {
@@ -540,7 +541,7 @@ func (c *CPU) readMemory16(address uint16) uint16 {
 }
 
 func (c *CPU) writeMemory(address uint16, value uint8) {
-	c.memory[address] = value
+	c.bus.WriteMemory(address, value)
 }
 
 func (c *CPU) writeMemory16(address uint16, value uint16) {
@@ -576,17 +577,6 @@ func (c *CPU) stackPop16() uint16 {
 	lo := uint16(c.stackPop())
 	hi := uint16(c.stackPop())
 	return (hi << 8) | lo
-}
-
-func (c *CPU) LoadAndRun(program []uint8) {
-	c.Load(program)
-	c.Reset()
-	c.Run()
-}
-
-func (c *CPU) Load(program []uint8) {
-	copy(c.memory[0x8000:(0x8000+len(program))], program)
-	c.writeMemory16(0xFFFC, 0x8000)
 }
 
 func (c *CPU) Reset() {

@@ -6,6 +6,26 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func createTestCartridgeForCPUTest(program []uint8) *Cartridge {
+	programRom := make([]uint8, 2*PROGRAM_ROM_PAGE_SIZE)
+	copy(programRom, program)
+	programRom[0x7ffc] = 0x00
+	programRom[0x7ffd] = 0x80
+
+	dummyCharacterRom := createDummyRom(2, 1*CHARACTER_ROM_PAGE_SIZE)
+	testRom := createTestCartridge(TestCartridge{
+		header: []uint8{
+			0x4E, 0x45, 0x53, 0x1A, 0x02, 0x01, 0x31, 00, 00, 00, 00, 00, 00, 00, 00, 00,
+		},
+		trainer:      nil,
+		programRom:   programRom,
+		characterRom: dummyCharacterRom,
+	})
+
+	cartridge, _ := NewCartridge(testRom)
+	return cartridge
+}
+
 func TestCPULDA(t *testing.T) {
 	cases := []struct {
 		name            string
@@ -33,15 +53,15 @@ func TestCPULDA(t *testing.T) {
 		// LDA Absolute
 		{
 			name:            "LDA Absolute",
-			memory:          map[uint16]uint8{0x2010: 0x05},
-			program:         []uint8{0xad, 0x10, 0x20, 0x00},
+			memory:          map[uint16]uint8{0x0010: 0x05},
+			program:         []uint8{0xad, 0x10, 0x00, 0x00},
 			expectRegisterA: uint8(0x05),
 		},
 		// LDA AbsoluteX
 		{
 			name:            "LDA AbsoluteX",
-			memory:          map[uint16]uint8{0x2011: 0x05},
-			program:         []uint8{0xa9, 0x01, 0xaa, 0xbd, 0x10, 0x20, 0x00},
+			memory:          map[uint16]uint8{0x0011: 0x05},
+			program:         []uint8{0xa9, 0x01, 0xaa, 0xbd, 0x10, 0x00, 0x00},
 			expectRegisterA: uint8(0x05),
 		},
 		// LDA IndirectX
@@ -57,11 +77,13 @@ func TestCPULDA(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			cpu := NewCPU()
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			cpu := NewCPU(bus)
 			for addr, value := range tt.memory {
 				cpu.writeMemory(addr, value)
 			}
-			cpu.LoadAndRun(tt.program)
+			cpu.Reset()
+			cpu.Run()
 			assert.Equal(t, tt.expectRegisterA, cpu.registerA)
 		})
 	}
@@ -84,8 +106,10 @@ func TestCPULDX(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			cpu := NewCPU()
-			cpu.LoadAndRun(tt.program)
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			cpu := NewCPU(bus)
+			cpu.Reset()
+			cpu.Run()
 			assert.Equal(t, tt.expectRegisterX, cpu.registerX)
 		})
 	}
@@ -108,8 +132,10 @@ func TestCPULDY(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			cpu := NewCPU()
-			cpu.LoadAndRun(tt.program)
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			cpu := NewCPU(bus)
+			cpu.Reset()
+			cpu.Run()
 			assert.Equal(t, tt.expectRegisterY, cpu.registerY)
 		})
 	}
@@ -137,14 +163,14 @@ func TestCPUSTA(t *testing.T) {
 		// STA Absolute
 		{
 			name:         "STA Absolute",
-			program:      []uint8{0xa9, 0x05, 0x8d, 0x10, 0x20, 0x00},
-			expectMemory: map[uint16]uint8{0x2010: 0x05},
+			program:      []uint8{0xa9, 0x05, 0x8d, 0x10, 0x00, 0x00},
+			expectMemory: map[uint16]uint8{0x0010: 0x05},
 		},
 		// STA AbsoluteX
 		{
 			name:         "STA AbsoluteX",
-			program:      []uint8{0xa9, 0x01, 0xaa, 0xa9, 0x05, 0x9d, 0x10, 0x20, 0x00},
-			expectMemory: map[uint16]uint8{0x2011: 0x05},
+			program:      []uint8{0xa9, 0x01, 0xaa, 0xa9, 0x05, 0x9d, 0x10, 0x00, 0x00},
+			expectMemory: map[uint16]uint8{0x0011: 0x05},
 		},
 		// STA IndirectX
 		{
@@ -159,11 +185,13 @@ func TestCPUSTA(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			cpu := NewCPU()
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			cpu := NewCPU(bus)
 			for addr, value := range tt.memory {
 				cpu.writeMemory(addr, value)
 			}
-			cpu.LoadAndRun(tt.program)
+			cpu.Reset()
+			cpu.Run()
 			for addr, value := range tt.expectMemory {
 				assert.Equal(t, value, cpu.readMemory(addr))
 			}
@@ -189,11 +217,13 @@ func TestCPUSTX(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			cpu := NewCPU()
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			cpu := NewCPU(bus)
 			for addr, value := range tt.memory {
 				cpu.writeMemory(addr, value)
 			}
-			cpu.LoadAndRun(tt.program)
+			cpu.Reset()
+			cpu.Run()
 			for addr, value := range tt.expectMemory {
 				assert.Equal(t, value, cpu.readMemory(addr))
 			}
@@ -219,11 +249,13 @@ func TestCPUSTY(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			cpu := NewCPU()
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			cpu := NewCPU(bus)
 			for addr, value := range tt.memory {
 				cpu.writeMemory(addr, value)
 			}
-			cpu.LoadAndRun(tt.program)
+			cpu.Reset()
+			cpu.Run()
 			for addr, value := range tt.expectMemory {
 				assert.Equal(t, value, cpu.readMemory(addr))
 			}
@@ -232,93 +264,94 @@ func TestCPUSTY(t *testing.T) {
 }
 
 func TestCPUInterpretLDAImmediateLoad(t *testing.T) {
-	cpu := NewCPU()
-	cpu.LoadAndRun([]uint8{0xa9, 0x05, 0x00})
+	bus := NewBus(createTestCartridgeForCPUTest([]uint8{0xa9, 0x05, 0x00}))
+	cpu := NewCPU(bus)
+	cpu.Reset()
+	cpu.Run()
 	assert.Equal(t, uint8(0x05), cpu.registerA)
 	assert.True(t, cpu.status&0b0000_0010 == 0b00)
 	assert.True(t, cpu.status&0b1000_0000 == 0)
 }
 
 func TestCPUInterpretLDAZeroFlag(t *testing.T) {
-	cpu := NewCPU()
-	cpu.LoadAndRun([]uint8{0xa9, 0x00, 0x00})
+	bus := NewBus(createTestCartridgeForCPUTest([]uint8{0xa9, 0x00, 0x00}))
+	cpu := NewCPU(bus)
+	cpu.Reset()
+	cpu.Run()
 	assert.True(t, cpu.status&0b0000_0010 == 0b10)
 }
 
 func TestCPUInterpretaTaxMoveAToX(t *testing.T) {
-	cpu := NewCPU()
-	// LDA $0a
-	// TAX
-	cpu.LoadAndRun([]uint8{0xa9, 0x0a, 0xaa, 0x00})
+	bus := NewBus(createTestCartridgeForCPUTest([]uint8{0xa9, 0x0a, 0xaa, 0x00}))
+	cpu := NewCPU(bus)
+	cpu.Reset()
+	cpu.Run()
 	assert.Equal(t, uint8(10), cpu.registerX)
 }
 
 func TestCPUInterpretaTaxMoveAToY(t *testing.T) {
-	cpu := NewCPU()
-	// LDA $0a
-	// TAY
-	cpu.LoadAndRun([]uint8{0xa9, 0x0a, 0xa8, 0x00})
+	bus := NewBus(createTestCartridgeForCPUTest([]uint8{0xa9, 0x0a, 0xa8, 0x00}))
+	cpu := NewCPU(bus)
+	cpu.Reset()
+	cpu.Run()
 	assert.Equal(t, uint8(10), cpu.registerY)
 }
 
 func TestCPUINC(t *testing.T) {
-	cpu := NewCPU()
-	cpu.memory[0x10] = 0x05
-	cpu.LoadAndRun([]uint8{0xe6, 0x10, 0x00})
-	assert.Equal(t, uint8(0x06), cpu.memory[0x10])
+	bus := NewBus(createTestCartridgeForCPUTest([]uint8{0xe6, 0x10, 0x00}))
+	cpu := NewCPU(bus)
+	cpu.writeMemory(0x10, 0x05)
+	cpu.Reset()
+	cpu.Run()
+	assert.Equal(t, uint8(0x06), cpu.readMemory(0x10))
 }
 
 func TestCPUInterpretInx(t *testing.T) {
-	cpu := NewCPU()
-	// LDA $02
-	// TAX
-	// INX
-	cpu.LoadAndRun([]uint8{0xa9, 0x02, 0xaa, 0xe8, 0x00})
+	bus := NewBus(createTestCartridgeForCPUTest([]uint8{0xa9, 0x02, 0xaa, 0xe8, 0x00}))
+	cpu := NewCPU(bus)
+	cpu.Reset()
+	cpu.Run()
 	assert.Equal(t, uint8(3), cpu.registerX)
 }
 
 func TestCPUInterpretInxOverflow(t *testing.T) {
-	cpu := NewCPU()
-	// LDA $ff
-	// TAX
-	// INX
-	// INX
-	cpu.LoadAndRun([]uint8{0xa9, 0xff, 0xaa, 0xe8, 0xe8, 0x00})
+	bus := NewBus(createTestCartridgeForCPUTest([]uint8{0xa9, 0xff, 0xaa, 0xe8, 0xe8, 0x00}))
+	cpu := NewCPU(bus)
+	cpu.Reset()
+	cpu.Run()
 	assert.Equal(t, uint8(1), cpu.registerX)
 }
 
 func TestCPUInterpretIny(t *testing.T) {
-	cpu := NewCPU()
-	// LDA $02
-	// TAX
-	// INY
-	cpu.LoadAndRun([]uint8{0xa9, 0x02, 0xa8, 0xc8, 0x00})
+	bus := NewBus(createTestCartridgeForCPUTest([]uint8{0xa9, 0x02, 0xa8, 0xc8, 0x00}))
+	cpu := NewCPU(bus)
+	cpu.Reset()
+	cpu.Run()
 	assert.Equal(t, uint8(3), cpu.registerY)
 }
 
 func TestCPUInterpretInyOverflow(t *testing.T) {
-	cpu := NewCPU()
-	// LDA $ff
-	// TAX
-	// INY
-	// INY
-	cpu.LoadAndRun([]uint8{0xa9, 0xff, 0xa8, 0xc8, 0xc8, 0x00})
+	bus := NewBus(createTestCartridgeForCPUTest([]uint8{0xa9, 0xff, 0xa8, 0xc8, 0xc8, 0x00}))
+	cpu := NewCPU(bus)
+	cpu.Reset()
+	cpu.Run()
 	assert.Equal(t, uint8(1), cpu.registerY)
 }
 
 func TestCPUInterpret5OpsWorkingTogether(t *testing.T) {
-	cpu := NewCPU()
-	// LDA $c0
-	// TAX
-	// INX
-	cpu.LoadAndRun([]uint8{0xa9, 0xc0, 0xaa, 0xe8, 0x00})
+	bus := NewBus(createTestCartridgeForCPUTest([]uint8{0xa9, 0xc0, 0xaa, 0xe8, 0x00}))
+	cpu := NewCPU(bus)
+	cpu.Reset()
+	cpu.Run()
 	assert.Equal(t, uint8(0xc1), cpu.registerX)
 }
 
 func TestCPUInterpretLDAFromMemory(t *testing.T) {
-	cpu := NewCPU()
+	bus := NewBus(createTestCartridgeForCPUTest([]uint8{0xa5, 0x10, 0x00}))
+	cpu := NewCPU(bus)
 	cpu.writeMemory(0x10, 0x55)
-	cpu.LoadAndRun([]uint8{0xa5, 0x10, 0x00})
+	cpu.Reset()
+	cpu.Run()
 	assert.Equal(t, uint8(0x55), cpu.registerA)
 }
 
@@ -352,8 +385,10 @@ func TestCPUADC(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			cpu := NewCPU()
-			cpu.LoadAndRun(tt.program)
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			cpu := NewCPU(bus)
+			cpu.Reset()
+			cpu.Run()
 			assert.Equal(t, tt.expectRegisterA, cpu.registerA)
 			assert.Equal(t, tt.expectStatus, cpu.status)
 		})
@@ -386,8 +421,10 @@ func TestCPUAND(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			cpu := NewCPU()
-			cpu.LoadAndRun(tt.program)
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			cpu := NewCPU(bus)
+			cpu.Reset()
+			cpu.Run()
 			assert.Equal(t, tt.expectRegisterA, cpu.registerA)
 			assert.Equal(t, tt.expectStatus, cpu.status)
 		})
@@ -419,8 +456,10 @@ func TestCPUASLAccumulator(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			cpu := NewCPU()
-			cpu.LoadAndRun(tt.program)
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			cpu := NewCPU(bus)
+			cpu.Reset()
+			cpu.Run()
 			assert.Equal(t, tt.expectRegisterA, cpu.registerA)
 			assert.Equal(t, tt.expectStatus, cpu.status)
 		})
@@ -457,11 +496,13 @@ func TestCPUASL(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			cpu := NewCPU()
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			cpu := NewCPU(bus)
 			for addr, value := range tt.memory {
 				cpu.writeMemory(addr, value)
 			}
-			cpu.LoadAndRun(tt.program)
+			cpu.Reset()
+			cpu.Run()
 			for addr, value := range tt.expectMemory {
 				assert.Equal(t, value, cpu.readMemory(addr))
 			}
@@ -497,8 +538,10 @@ func TestCPUBCC(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			cpu := NewCPU()
-			cpu.LoadAndRun(tt.program)
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			cpu := NewCPU(bus)
+			cpu.Reset()
+			cpu.Run()
 			assert.Equal(t, tt.expectPC, cpu.programCounter)
 		})
 	}
@@ -531,8 +574,10 @@ func TestCPUBCS(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			cpu := NewCPU()
-			cpu.LoadAndRun(tt.program)
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			cpu := NewCPU(bus)
+			cpu.Reset()
+			cpu.Run()
 			assert.Equal(t, tt.expectPC, cpu.programCounter)
 		})
 	}
@@ -560,14 +605,15 @@ func TestCPUBEQ(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			cpu := NewCPU()
-			cpu.LoadAndRun(tt.program)
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			cpu := NewCPU(bus)
+			cpu.Reset()
+			cpu.Run()
 			assert.Equal(t, tt.expectPC, cpu.programCounter)
 		})
 	}
 }
 
-// BITのテストコードを生成する
 func TestCPUBIT(t *testing.T) {
 	cases := []struct {
 		name         string
@@ -595,8 +641,8 @@ func TestCPUBIT(t *testing.T) {
 		},
 		{
 			name:         "BIT Absolute",
-			memory:       map[uint16]uint8{0x2010: 0xff},
-			program:      []uint8{0xa9, 0x05, 0x2c, 0x10, 0x20, 0x00},
+			memory:       map[uint16]uint8{0x0010: 0xff},
+			program:      []uint8{0xa9, 0x05, 0x2c, 0x10, 0x00, 0x00},
 			expectStatus: 0b1100_0000,
 		},
 	}
@@ -604,11 +650,13 @@ func TestCPUBIT(t *testing.T) {
 	for _, tt := range cases {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			cpu := NewCPU()
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			cpu := NewCPU(bus)
 			for addr, value := range tt.memory {
 				cpu.writeMemory(addr, value)
 			}
-			cpu.LoadAndRun(tt.program)
+			cpu.Reset()
+			cpu.Run()
 			assert.Equal(t, tt.expectStatus, cpu.status)
 		})
 	}
@@ -636,8 +684,10 @@ func TestCPUBMI(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			cpu := NewCPU()
-			cpu.LoadAndRun(tt.program)
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			cpu := NewCPU(bus)
+			cpu.Reset()
+			cpu.Run()
 			assert.Equal(t, tt.expectPC, cpu.programCounter)
 		})
 	}
@@ -665,8 +715,10 @@ func TestCPUBNE(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			cpu := NewCPU()
-			cpu.LoadAndRun(tt.program)
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			cpu := NewCPU(bus)
+			cpu.Reset()
+			cpu.Run()
 			assert.Equal(t, tt.expectPC, cpu.programCounter)
 		})
 	}
@@ -694,8 +746,10 @@ func TestCPUBPL(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			cpu := NewCPU()
-			cpu.LoadAndRun(tt.program)
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			cpu := NewCPU(bus)
+			cpu.Reset()
+			cpu.Run()
 			assert.Equal(t, tt.expectPC, cpu.programCounter)
 		})
 	}
@@ -722,8 +776,10 @@ func TestCPUBVC(t *testing.T) {
 	for _, tt := range cases {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			cpu := NewCPU()
-			cpu.LoadAndRun(tt.program)
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			cpu := NewCPU(bus)
+			cpu.Reset()
+			cpu.Run()
 			assert.Equal(t, tt.expectPC, cpu.programCounter)
 		})
 	}
@@ -750,14 +806,15 @@ func TestCPUBVS(t *testing.T) {
 	for _, tt := range cases {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			cpu := NewCPU()
-			cpu.LoadAndRun(tt.program)
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			cpu := NewCPU(bus)
+			cpu.Reset()
+			cpu.Run()
 			assert.Equal(t, tt.expectPC, cpu.programCounter)
 		})
 	}
 }
 
-// CLCのテストコードを生成する
 func TestCPUCLC(t *testing.T) {
 	cases := []struct {
 		name         string
@@ -774,8 +831,10 @@ func TestCPUCLC(t *testing.T) {
 	for _, tt := range cases {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			cpu := NewCPU()
-			cpu.LoadAndRun(tt.program)
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			cpu := NewCPU(bus)
+			cpu.Reset()
+			cpu.Run()
 			assert.Equal(t, tt.expectStatus, cpu.status)
 		})
 	}
@@ -797,8 +856,10 @@ func TestCPUCLD(t *testing.T) {
 	for _, tt := range cases {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			cpu := NewCPU()
-			cpu.LoadAndRun(tt.program)
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			cpu := NewCPU(bus)
+			cpu.Reset()
+			cpu.Run()
 			assert.Equal(t, tt.expectStatus, cpu.status)
 		})
 	}
@@ -820,8 +881,10 @@ func TestCPUSEC(t *testing.T) {
 	for _, tt := range cases {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			cpu := NewCPU()
-			cpu.LoadAndRun(tt.program)
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			cpu := NewCPU(bus)
+			cpu.Reset()
+			cpu.Run()
 			assert.Equal(t, tt.expectStatus, cpu.status)
 		})
 	}
@@ -843,8 +906,10 @@ func TestCPUSED(t *testing.T) {
 	for _, tt := range cases {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			cpu := NewCPU()
-			cpu.LoadAndRun(tt.program)
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			cpu := NewCPU(bus)
+			cpu.Reset()
+			cpu.Run()
 			assert.Equal(t, tt.expectStatus, cpu.status)
 		})
 	}
@@ -866,8 +931,10 @@ func TestCPUCLI(t *testing.T) {
 	for _, tt := range cases {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			cpu := NewCPU()
-			cpu.LoadAndRun(tt.program)
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			cpu := NewCPU(bus)
+			cpu.Reset()
+			cpu.Run()
 			assert.Equal(t, tt.expectStatus, cpu.status)
 		})
 	}
@@ -889,8 +956,10 @@ func TestCPUSEI(t *testing.T) {
 	for _, tt := range cases {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			cpu := NewCPU()
-			cpu.LoadAndRun(tt.program)
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			cpu := NewCPU(bus)
+			cpu.Reset()
+			cpu.Run()
 			assert.Equal(t, tt.expectStatus, cpu.status)
 		})
 	}
@@ -911,8 +980,10 @@ func TestCPUCLV(t *testing.T) {
 	for _, tt := range cases {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			cpu := NewCPU()
-			cpu.LoadAndRun(tt.program)
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			cpu := NewCPU(bus)
+			cpu.Reset()
+			cpu.Run()
 			assert.Equal(t, tt.expectStatus, cpu.status)
 		})
 	}
@@ -947,11 +1018,13 @@ func TestCPUCMP(t *testing.T) {
 	for _, tt := range cases {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			cpu := NewCPU()
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			cpu := NewCPU(bus)
 			for addr, value := range tt.memory {
 				cpu.writeMemory(addr, value)
 			}
-			cpu.LoadAndRun(tt.program)
+			cpu.Reset()
+			cpu.Run()
 			assert.Equal(t, tt.expectStatus, cpu.status)
 		})
 	}
@@ -986,11 +1059,13 @@ func TestCPUCPX(t *testing.T) {
 	for _, tt := range cases {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			cpu := NewCPU()
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			cpu := NewCPU(bus)
 			for addr, value := range tt.memory {
 				cpu.writeMemory(addr, value)
 			}
-			cpu.LoadAndRun(tt.program)
+			cpu.Reset()
+			cpu.Run()
 			assert.Equal(t, tt.expectStatus, cpu.status)
 		})
 	}
@@ -1025,32 +1100,40 @@ func TestCPUCPY(t *testing.T) {
 	for _, tt := range cases {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			cpu := NewCPU()
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			cpu := NewCPU(bus)
 			for addr, value := range tt.memory {
 				cpu.writeMemory(addr, value)
 			}
-			cpu.LoadAndRun(tt.program)
+			cpu.Reset()
+			cpu.Run()
 			assert.Equal(t, tt.expectStatus, cpu.status)
 		})
 	}
 }
 
 func TestCPUDEC(t *testing.T) {
-	cpu := NewCPU()
-	cpu.memory[0x10] = 0x05
-	cpu.LoadAndRun([]uint8{0xc6, 0x10, 0x00})
-	assert.Equal(t, uint8(0x04), cpu.memory[0x10])
+	bus := NewBus(createTestCartridgeForCPUTest([]uint8{0xc6, 0x10, 0x00}))
+	cpu := NewCPU(bus)
+	cpu.writeMemory(0x10, 0x05)
+	cpu.Reset()
+	cpu.Run()
+	assert.Equal(t, uint8(0x04), cpu.readMemory(0x10))
 }
 
 func TestCPUDEX(t *testing.T) {
-	cpu := NewCPU()
-	cpu.LoadAndRun([]uint8{0xa2, 0x10, 0xca, 0x00})
+	bus := NewBus(createTestCartridgeForCPUTest([]uint8{0xa2, 0x10, 0xca, 0x00}))
+	cpu := NewCPU(bus)
+	cpu.Reset()
+	cpu.Run()
 	assert.Equal(t, uint8(0x0f), cpu.registerX)
 }
 
 func TestCPUDEY(t *testing.T) {
-	cpu := NewCPU()
-	cpu.LoadAndRun([]uint8{0xa0, 0x10, 0x88, 0x00})
+	bus := NewBus(createTestCartridgeForCPUTest([]uint8{0xa0, 0x10, 0x88, 0x00}))
+	cpu := NewCPU(bus)
+	cpu.Reset()
+	cpu.Run()
 	assert.Equal(t, uint8(0x0f), cpu.registerY)
 }
 
@@ -1073,8 +1156,10 @@ func TestCPUEOR(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			cpu := NewCPU()
-			cpu.LoadAndRun(tt.program)
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			cpu := NewCPU(bus)
+			cpu.Reset()
+			cpu.Run()
 			assert.Equal(t, tt.expectRegisterA, cpu.registerA)
 			assert.Equal(t, tt.expectStatus, cpu.status)
 		})
@@ -1100,8 +1185,10 @@ func TestCPUORA(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			cpu := NewCPU()
-			cpu.LoadAndRun(tt.program)
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			cpu := NewCPU(bus)
+			cpu.Reset()
+			cpu.Run()
 			assert.Equal(t, tt.expectRegisterA, cpu.registerA)
 			assert.Equal(t, tt.expectStatus, cpu.status)
 		})
@@ -1117,30 +1204,32 @@ func TestCPUJMP(t *testing.T) {
 	}{
 		{
 			name:     "JMP Absolute",
-			program:  []uint8{0x4c, 0x05, 0x80, 0x00},
-			expectPC: uint16(0x8006),
+			program:  []uint8{0x4c, 0x05, 0x10, 0x00},
+			expectPC: uint16(0x1006),
 		},
 		{
 			name:     "JMP Indirect",
-			program:  []uint8{0x6c, 0x05, 0x80, 0x00},
-			expectPC: uint16(0x8006),
+			program:  []uint8{0x6c, 0x05, 0x10, 0x00},
+			expectPC: uint16(0x1006),
 		},
 		{
 			name:     "JMP Indirect with page boundary",
-			memory:   map[uint16]uint8{0x8100: 0x80, 0x81ff: 0x70},
-			program:  []uint8{0x6c, 0xff, 0x81, 0x00},
-			expectPC: uint16(0x8071),
+			memory:   map[uint16]uint8{0x1100: 0x10, 0x11ff: 0x70},
+			program:  []uint8{0x6c, 0xff, 0x11, 0x00},
+			expectPC: uint16(0x1071),
 		},
 	}
 
 	for _, tt := range cases {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			cpu := NewCPU()
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			cpu := NewCPU(bus)
 			for addr, value := range tt.memory {
 				cpu.writeMemory(addr, value)
 			}
-			cpu.LoadAndRun(tt.program)
+			cpu.Reset()
+			cpu.Run()
 			assert.Equal(t, tt.expectPC, cpu.programCounter)
 		})
 	}
@@ -1165,11 +1254,13 @@ func TestCPUJSR(t *testing.T) {
 	for _, tt := range cases {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			cpu := NewCPU()
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			cpu := NewCPU(bus)
 			for addr, value := range tt.memory {
 				cpu.writeMemory(addr, value)
 			}
-			cpu.LoadAndRun(tt.program)
+			cpu.Reset()
+			cpu.Run()
 			assert.Equal(t, tt.expectPC, cpu.programCounter)
 			for addr, value := range tt.expectStack {
 				assert.Equal(t, value, cpu.readMemory(addr))
@@ -1187,8 +1278,8 @@ func TestCPURTS(t *testing.T) {
 	}{
 		{
 			name:     "RTS",
-			memory:   map[uint16]uint8{0x8005: 0x60},
-			program:  []uint8{0x20, 0x05, 0x80, 0x00},
+			memory:   map[uint16]uint8{0x1005: 0x60},
+			program:  []uint8{0x20, 0x05, 0x10, 0x00},
 			expectPC: uint16(0x8004),
 		},
 	}
@@ -1196,11 +1287,13 @@ func TestCPURTS(t *testing.T) {
 	for _, tt := range cases {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			cpu := NewCPU()
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			cpu := NewCPU(bus)
 			for addr, value := range tt.memory {
 				cpu.writeMemory(addr, value)
 			}
-			cpu.LoadAndRun(tt.program)
+			cpu.Reset()
+			cpu.Run()
 			assert.Equal(t, tt.expectPC, cpu.programCounter)
 		})
 	}
@@ -1231,11 +1324,13 @@ func TestCPULSRAccumulator(t *testing.T) {
 	for _, tt := range cases {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			cpu := NewCPU()
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			cpu := NewCPU(bus)
 			for addr, value := range tt.memory {
 				cpu.writeMemory(addr, value)
 			}
-			cpu.LoadAndRun(tt.program)
+			cpu.Reset()
+			cpu.Run()
 			assert.Equal(t, tt.expectStatus, cpu.status)
 		})
 	}
@@ -1268,11 +1363,13 @@ func TestCPULSR(t *testing.T) {
 	for _, tt := range cases {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			cpu := NewCPU()
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			cpu := NewCPU(bus)
 			for addr, value := range tt.memory {
 				cpu.writeMemory(addr, value)
 			}
-			cpu.LoadAndRun(tt.program)
+			cpu.Reset()
+			cpu.Run()
 			for addr, value := range tt.expectMemory {
 				assert.Equal(t, value, cpu.readMemory(addr))
 			}
@@ -1299,12 +1396,14 @@ func TestCPUPHA(t *testing.T) {
 	for _, tt := range cases {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			cpu := NewCPU()
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			cpu := NewCPU(bus)
 
 			for addr, value := range tt.memory {
 				cpu.writeMemory(addr, value)
 			}
-			cpu.LoadAndRun(tt.program)
+			cpu.Reset()
+			cpu.Run()
 
 			for addr, value := range tt.expectStack {
 				assert.Equal(t, value, cpu.readMemory(addr))
@@ -1331,12 +1430,14 @@ func TestCPUPLA(t *testing.T) {
 	for _, tt := range cases {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			cpu := NewCPU()
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			cpu := NewCPU(bus)
 
 			for addr, value := range tt.memory {
 				cpu.writeMemory(addr, value)
 			}
-			cpu.LoadAndRun(tt.program)
+			cpu.Reset()
+			cpu.Run()
 			assert.Equal(t, tt.expectRegisterA, cpu.registerA)
 
 		})
@@ -1359,9 +1460,10 @@ func TestCPUPHP(t *testing.T) {
 	for _, tt := range cases {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			cpu := NewCPU()
-
-			cpu.LoadAndRun(tt.program)
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			cpu := NewCPU(bus)
+			cpu.Reset()
+			cpu.Run()
 			for addr, value := range tt.expectStack {
 				assert.Equal(t, value, cpu.readMemory(addr))
 			}
@@ -1385,8 +1487,10 @@ func TestCPUPLP(t *testing.T) {
 	for _, tt := range cases {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			cpu := NewCPU()
-			cpu.LoadAndRun(tt.program)
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			cpu := NewCPU(bus)
+			cpu.Reset()
+			cpu.Run()
 			assert.Equal(t, tt.expectStatus, cpu.status)
 		})
 	}
@@ -1416,9 +1520,10 @@ func TestCPUROLAccumulator(t *testing.T) {
 	for _, tt := range cases {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			cpu := NewCPU()
-
-			cpu.LoadAndRun(tt.program)
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			cpu := NewCPU(bus)
+			cpu.Reset()
+			cpu.Run()
 			assert.Equal(t, tt.expectRegisterA, cpu.registerA)
 			assert.Equal(t, tt.expectStatus, cpu.status)
 		})
@@ -1450,12 +1555,14 @@ func TestCPUROL(t *testing.T) {
 	for _, tt := range cases {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			cpu := NewCPU()
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			cpu := NewCPU(bus)
 			for addr, value := range tt.memory {
 				cpu.writeMemory(addr, value)
 			}
 
-			cpu.LoadAndRun(tt.program)
+			cpu.Reset()
+			cpu.Run()
 			for addr, value := range tt.expectMemory {
 				assert.Equal(t, value, cpu.readMemory(addr))
 			}
@@ -1488,9 +1595,10 @@ func TestCPURORAccumulator(t *testing.T) {
 	for _, tt := range cases {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			cpu := NewCPU()
-
-			cpu.LoadAndRun(tt.program)
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			cpu := NewCPU(bus)
+			cpu.Reset()
+			cpu.Run()
 			assert.Equal(t, tt.expectRegisterA, cpu.registerA)
 			assert.Equal(t, tt.expectStatus, cpu.status)
 		})
@@ -1522,12 +1630,13 @@ func TestCPUROR(t *testing.T) {
 	for _, tt := range cases {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			cpu := NewCPU()
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			cpu := NewCPU(bus)
 			for addr, value := range tt.memory {
 				cpu.writeMemory(addr, value)
 			}
-
-			cpu.LoadAndRun(tt.program)
+			cpu.Reset()
+			cpu.Run()
 			for addr, value := range tt.expectMemory {
 				assert.Equal(t, value, cpu.readMemory(addr))
 			}
@@ -1537,13 +1646,12 @@ func TestCPUROR(t *testing.T) {
 }
 
 func TestCPURTI(t *testing.T) {
-	cpu := NewCPU()
-	cpu.memory[0x01fd] = 0x80
-	cpu.memory[0x01fc] = 0x11
-	cpu.memory[0x01fb] = 0b1000_0011
-
 	program := []uint8{0x40, 0x00}
-	cpu.Load(program)
+	bus := NewBus(createTestCartridgeForCPUTest(program))
+	cpu := NewCPU(bus)
+	cpu.writeMemory(0x01fd, 0x80)
+	cpu.writeMemory(0x01fc, 0x11)
+	cpu.writeMemory(0x01fb, 0b1000_0011)
 	cpu.programCounter = cpu.readMemory16(0xFFFC)
 	cpu.stackPointer = 0xfa
 	cpu.Run()
@@ -1591,12 +1699,13 @@ func TestCPUSBC(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			cpu := NewCPU()
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			cpu := NewCPU(bus)
 			for addr, value := range tt.memory {
 				cpu.writeMemory(addr, value)
 			}
-
-			cpu.LoadAndRun(tt.program)
+			cpu.Reset()
+			cpu.Run()
 			assert.Equal(t, tt.expectRegisterA, cpu.registerA)
 			assert.Equal(t, tt.expectStatus, cpu.status)
 		})
@@ -1604,41 +1713,41 @@ func TestCPUSBC(t *testing.T) {
 }
 
 func TestCPUTSX(t *testing.T) {
-	cpu := NewCPU()
+	program := []uint8{0xba, 0x00}
+	bus := NewBus(createTestCartridgeForCPUTest(program))
+	cpu := NewCPU(bus)
 	cpu.stackPointer = 0x05
 	cpu.programCounter = 0x8000
-	program := []uint8{0xba, 0x00}
-	cpu.Load(program)
 	cpu.Run()
 	assert.Equal(t, uint8(0x05), cpu.registerX)
 }
 
 func TestCPUTXA(t *testing.T) {
-	cpu := NewCPU()
+	program := []uint8{0x8a, 0x00}
+	bus := NewBus(createTestCartridgeForCPUTest(program))
+	cpu := NewCPU(bus)
 	cpu.registerX = 0x05
 	cpu.programCounter = 0x8000
-	program := []uint8{0x8a, 0x00}
-	cpu.Load(program)
 	cpu.Run()
 	assert.Equal(t, uint8(0x05), cpu.registerA)
 }
 
 func TestCPUTXS(t *testing.T) {
-	cpu := NewCPU()
+	program := []uint8{0x9a, 0x00}
+	bus := NewBus(createTestCartridgeForCPUTest(program))
+	cpu := NewCPU(bus)
 	cpu.registerX = 0x05
 	cpu.programCounter = 0x8000
-	program := []uint8{0x9a, 0x00}
-	cpu.Load(program)
 	cpu.Run()
 	assert.Equal(t, uint8(0x05), cpu.stackPointer)
 }
 
 func TestCPUTYA(t *testing.T) {
-	cpu := NewCPU()
+	program := []uint8{0x98, 0x00}
+	bus := NewBus(createTestCartridgeForCPUTest(program))
+	cpu := NewCPU(bus)
 	cpu.registerY = 0x05
 	cpu.programCounter = 0x8000
-	program := []uint8{0x98, 0x00}
-	cpu.Load(program)
 	cpu.Run()
 	assert.Equal(t, uint8(0x05), cpu.registerA)
 }
