@@ -1,6 +1,9 @@
 package nes
 
-import "fmt"
+import (
+	"fmt"
+	"log/slog"
+)
 
 type AddressingMode uint8
 
@@ -18,7 +21,6 @@ const (
 	ACCUMULATOR
 	RELATIVE
 	IMPLIED
-	NONE_ADDRESSING
 )
 
 const (
@@ -592,6 +594,7 @@ func (c *CPU) Run() {
 	var opsInfo OpeCode
 	var ok bool
 	for {
+		slog.Info(trace(c))
 		code := c.readMemory(c.programCounter)
 		c.programCounter++
 		programCounterState := c.programCounter
@@ -721,32 +724,36 @@ func (c *CPU) Run() {
 }
 
 func (c *CPU) getOperandAddress(mode AddressingMode) uint16 {
+	return c.getAbsoluteAddress(mode, c.programCounter)
+}
+
+func (c *CPU) getAbsoluteAddress(mode AddressingMode, addr uint16) uint16 {
 	switch mode {
 	case IMMEDIATE:
-		return c.programCounter
+		return addr
 	case ZERO_PAGE:
-		return uint16(c.readMemory(c.programCounter))
+		return uint16(c.readMemory(addr))
 	case ZERO_PAGE_X:
-		return uint16(c.readMemory(c.programCounter) + c.registerX)
+		return uint16(c.readMemory(addr) + c.registerX)
 	case ZERO_PAGE_Y:
-		return uint16(c.readMemory(c.programCounter) + c.registerY)
+		return uint16(c.readMemory(addr) + c.registerY)
 	case ABSOLUTE:
-		return c.readMemory16(c.programCounter)
+		return c.readMemory16(addr)
 	case ABSOLUTE_X:
-		return c.readMemory16(c.programCounter) + uint16(c.registerX)
+		return c.readMemory16(addr) + uint16(c.registerX)
 	case ABSOLUTE_Y:
-		return c.readMemory16(c.programCounter) + uint16(c.registerY)
+		return c.readMemory16(addr) + uint16(c.registerY)
 	case INDIRECT:
-		return c.readMemory16(c.programCounter)
+		return c.readMemory16(addr)
 	case INDIRECT_X:
-		base := c.readMemory16(c.programCounter)
+		base := c.readMemory16(addr)
 		ptr := uint8(base + uint16(c.registerX))
 		lo := c.readMemory(uint16(ptr))
 		hi := c.readMemory(uint16(ptr + 1))
 
 		return uint16(hi)<<8 | uint16(lo)
 	case INDIRECT_Y:
-		base := c.readMemory(c.programCounter)
+		base := c.readMemory(addr)
 		lo := c.readMemory(uint16(base))
 		hi := c.readMemory(uint16(base + 1))
 		derefBase := uint16(hi)<<8 | uint16(lo)
@@ -757,7 +764,7 @@ func (c *CPU) getOperandAddress(mode AddressingMode) uint16 {
 		return 0
 	case RELATIVE:
 		// オペランドは符号付き8ビットのオフセットとして解釈される
-		address := uint16(c.readMemory(c.programCounter))
+		address := uint16(c.readMemory(addr))
 		if address > 0x7f {
 			address = uint16(address) - uint16(0x100)
 		}

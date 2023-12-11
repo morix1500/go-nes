@@ -43,7 +43,7 @@ var CPU_OPS_CODES map[uint8]OpeCode = map[uint8]OpeCode{
 	0x30: {Mnemonic: "BMI", Length: 2, Cycles: 2 /* +1 if branch succeeds, +2 if to a new page*/, Mode: RELATIVE},
 	0xd0: {Mnemonic: "BNE", Length: 2, Cycles: 2 /* +1 if branch succeeds, +2 if to a new page*/, Mode: RELATIVE},
 	0x10: {Mnemonic: "BPL", Length: 2, Cycles: 2 /* +1 if branch succeeds, +2 if to a new page*/, Mode: RELATIVE},
-	0x00: {Mnemonic: "BRK", Length: 1, Cycles: 7, Mode: NONE_ADDRESSING},
+	0x00: {Mnemonic: "BRK", Length: 1, Cycles: 7, Mode: IMPLIED},
 
 	0x50: {Mnemonic: "BVC", Length: 2, Cycles: 2 /* +1 if branch succeeds, +2 if to a new page*/, Mode: RELATIVE},
 	0x70: {Mnemonic: "BVS", Length: 2, Cycles: 2 /* +1 if branch succeeds, +2 if to a new page*/, Mode: RELATIVE},
