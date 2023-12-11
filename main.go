@@ -1,13 +1,15 @@
 package main
 
 import (
+	"fmt"
 	"go-nes/nes"
 	"log"
+	"log/slog"
 	"os"
 )
 
 func main() {
-	filepath := "test.nes"
+	filepath := "nestest.nes"
 	data, err := os.ReadFile(filepath)
 	if err != nil {
 		log.Fatal(err)
@@ -17,6 +19,8 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	slog.Info(fmt.Sprintf("Program Rom Length: %d", len(c.ProgramRom)))
+	slog.Info(fmt.Sprintf("Charactor Rom Length: %d", len(c.CharacterRom)))
 
 	b := nes.NewBus(c)
 	cpu := nes.NewCPU(b)

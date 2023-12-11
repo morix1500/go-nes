@@ -52,9 +52,9 @@ func (b *Bus) ReadMemory(addr uint16) uint8 {
 		mirrorDownAddr := addr & 0b111_1111_1111
 		return b.CpuVRAM[mirrorDownAddr]
 	} else if addr >= PPU_REGISTERS && addr <= PPU_REGISTERS_MIRRORS_END {
-		mirrorDownAddr := addr & 0b00100000_00000111
+		//mirrorDownAddr := addr & 0b00100000_00000111
 		// TODO PPU is not supported yet
-		return b.CpuVRAM[mirrorDownAddr]
+		return 0
 	} else if addr >= 0x8000 && addr <= 0xFFFF {
 		return b.ReadProgramRom(addr)
 	}
@@ -66,9 +66,9 @@ func (b *Bus) WriteMemory(addr uint16, data uint8) {
 		mirrorDownAddr := addr & 0b111_1111_1111
 		b.CpuVRAM[mirrorDownAddr] = data
 	} else if addr >= PPU_REGISTERS && addr <= PPU_REGISTERS_MIRRORS_END {
-		mirrorDownAddr := addr & 0b00100000_00000111
+		//mirrorDownAddr := addr & 0b00100000_00000111
 		// TODO PPU is not supported yet
-		b.CpuVRAM[mirrorDownAddr] = data
+		//b.CpuVRAM[mirrorDownAddr] = data
 	} else if addr >= 0x8000 && addr <= 0xFFFF {
 		panic("Attempt to write to Cartridge ROM space")
 	}

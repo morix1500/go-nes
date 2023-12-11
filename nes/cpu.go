@@ -2,7 +2,6 @@ package nes
 
 import (
 	"fmt"
-	"log/slog"
 )
 
 type AddressingMode uint8
@@ -585,8 +584,9 @@ func (c *CPU) Reset() {
 	c.registerA = 0
 	c.registerX = 0
 	c.registerY = 0
-	c.status = 0
+	c.status = 0b00100100
 	c.programCounter = c.readMemory16(0xFFFC)
+	//c.programCounter = 0xc000
 	c.stackPointer = 0xfd
 }
 
@@ -594,7 +594,7 @@ func (c *CPU) Run() {
 	var opsInfo OpeCode
 	var ok bool
 	for {
-		slog.Info(trace(c))
+		fmt.Println(trace(c))
 		code := c.readMemory(c.programCounter)
 		c.programCounter++
 		programCounterState := c.programCounter

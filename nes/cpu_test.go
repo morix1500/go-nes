@@ -366,19 +366,19 @@ func TestCPUADC(t *testing.T) {
 			name:            "ADC Immediate",
 			program:         []uint8{0xa9, 0x05, 0x69, 0x05, 0x00},
 			expectRegisterA: uint8(0x0a),
-			expectStatus:    0b0000_0000,
+			expectStatus:    0b0010_0100,
 		},
 		{
 			name:            "ADC Immediate with carry",
 			program:         []uint8{0xa9, 0xff, 0x69, 0x02, 0x00},
 			expectRegisterA: uint8(0x01),
-			expectStatus:    0b0000_0001,
+			expectStatus:    0b0010_0101,
 		},
 		{
 			name:            "ADC Immediate with overflow",
 			program:         []uint8{0xa9, 0x7f, 0x69, 0x01, 0x00},
 			expectRegisterA: uint8(0x80),
-			expectStatus:    0b1100_0000,
+			expectStatus:    0b1110_0100,
 		},
 	}
 	for _, tt := range cases {
@@ -407,13 +407,13 @@ func TestCPUAND(t *testing.T) {
 			name:            "AND Immediate",
 			program:         []uint8{0xa9, 0x05, 0x29, 0x04, 0x00},
 			expectRegisterA: uint8(0x04),
-			expectStatus:    0b0000_0000,
+			expectStatus:    0b0010_0100,
 		},
 		{
 			name:            "AND Immediate with negative",
 			program:         []uint8{0xa9, 0xff, 0x29, 0x80, 0x00},
 			expectRegisterA: uint8(0x80),
-			expectStatus:    0b1000_0000,
+			expectStatus:    0b1010_0100,
 		},
 	}
 
@@ -442,13 +442,13 @@ func TestCPUASLAccumulator(t *testing.T) {
 			name:            "ASL Accumulator",
 			program:         []uint8{0xa9, 0x05, 0x0a, 0x00},
 			expectRegisterA: uint8(0x0a),
-			expectStatus:    0b0000_0000,
+			expectStatus:    0b0010_0100,
 		},
 		{
 			name:            "ASL Accumulator with carry",
 			program:         []uint8{0xa9, 0xff, 0x0a, 0x00},
 			expectRegisterA: uint8(0xfe),
-			expectStatus:    0b1000_0001,
+			expectStatus:    0b1010_0101,
 		},
 	}
 
@@ -479,7 +479,7 @@ func TestCPUASL(t *testing.T) {
 			memory:       map[uint16]uint8{0x10: 0x05},
 			program:      []uint8{0x06, 0x10, 0x00},
 			expectMemory: map[uint16]uint8{0x10: 0x0a},
-			expectStatus: 0b0000_0000,
+			expectStatus: 0b0010_0100,
 		},
 		{
 			name: "ASL ZeroPage with carry",
@@ -488,7 +488,7 @@ func TestCPUASL(t *testing.T) {
 			},
 			program:      []uint8{0x06, 0x10, 0x00},
 			expectMemory: map[uint16]uint8{0x10: 0xfe},
-			expectStatus: 0b1000_0001,
+			expectStatus: 0b1010_0101,
 		},
 	}
 
@@ -625,25 +625,25 @@ func TestCPUBIT(t *testing.T) {
 			name:         "BIT ZeroPage",
 			memory:       map[uint16]uint8{0x10: 0x05},
 			program:      []uint8{0xa9, 0x05, 0x24, 0x10, 0x00},
-			expectStatus: 0b0000_0000,
+			expectStatus: 0b0010_0100,
 		},
 		{
 			name:         "BIT ZeroPage with zero",
 			memory:       map[uint16]uint8{0x10: 0x05},
 			program:      []uint8{0xa9, 0x0a, 0x24, 0x10, 0x00},
-			expectStatus: 0b0000_0010,
+			expectStatus: 0b0010_0110,
 		},
 		{
 			name:         "BIT ZeroPage with negative and overflow",
 			memory:       map[uint16]uint8{0x10: 0xff},
 			program:      []uint8{0x24, 0x10, 0x00},
-			expectStatus: 0b1100_0010,
+			expectStatus: 0b1110_0110,
 		},
 		{
 			name:         "BIT Absolute",
 			memory:       map[uint16]uint8{0x0010: 0xff},
 			program:      []uint8{0xa9, 0x05, 0x2c, 0x10, 0x00, 0x00},
-			expectStatus: 0b1100_0000,
+			expectStatus: 0b1110_0100,
 		},
 	}
 
@@ -824,7 +824,7 @@ func TestCPUCLC(t *testing.T) {
 		{
 			name:         "CLC",
 			program:      []uint8{0xa9, 0xff, 0x69, 0x02, 0x18, 0x00},
-			expectStatus: 0b0000_0000,
+			expectStatus: 0b0010_0100,
 		},
 	}
 
@@ -849,7 +849,7 @@ func TestCPUCLD(t *testing.T) {
 		{
 			name:         "CLD",
 			program:      []uint8{0xf8, 0xd8, 0x00},
-			expectStatus: 0b0000_0000,
+			expectStatus: 0b0010_0100,
 		},
 	}
 
@@ -874,7 +874,7 @@ func TestCPUSEC(t *testing.T) {
 		{
 			name:         "SEC",
 			program:      []uint8{0x38, 0x00},
-			expectStatus: 0b0000_0001,
+			expectStatus: 0b0010_0101,
 		},
 	}
 
@@ -899,7 +899,7 @@ func TestCPUSED(t *testing.T) {
 		{
 			name:         "SED",
 			program:      []uint8{0xf8, 0x00},
-			expectStatus: 0b0000_1000,
+			expectStatus: 0b0010_1100,
 		},
 	}
 
@@ -923,8 +923,8 @@ func TestCPUCLI(t *testing.T) {
 	}{
 		{
 			name:         "CLI",
-			program:      []uint8{0x78, 0x58, 0x00},
-			expectStatus: 0b0000_0000,
+			program:      []uint8{0x58, 0x00},
+			expectStatus: 0b0010_0000,
 		},
 	}
 
@@ -948,8 +948,8 @@ func TestCPUSEI(t *testing.T) {
 	}{
 		{
 			name:         "SEI",
-			program:      []uint8{0x78, 0x00},
-			expectStatus: 0b0000_0100,
+			program:      []uint8{0x58, 0x78, 0x00},
+			expectStatus: 0b0010_0100,
 		},
 	}
 
@@ -974,7 +974,7 @@ func TestCPUCLV(t *testing.T) {
 		{
 			name:         "CLV",
 			program:      []uint8{0xa9, 0x7f, 0x69, 0x01, 0xb8, 0x00},
-			expectStatus: 0b1000_0000,
+			expectStatus: 0b1010_0100,
 		},
 	}
 	for _, tt := range cases {
@@ -1000,19 +1000,19 @@ func TestCPUCMP(t *testing.T) {
 			name:         "CMP Immediate with zero",
 			memory:       map[uint16]uint8{0x10: 0x05},
 			program:      []uint8{0xa9, 0x05, 0xc9, 0x05, 0x00},
-			expectStatus: 0b0000_0011,
+			expectStatus: 0b0010_0111,
 		},
 		{
 			name:         "CMP Immediate with carry",
 			memory:       map[uint16]uint8{0x10: 0x05},
 			program:      []uint8{0xa9, 0x05, 0xc9, 0x04, 0x00},
-			expectStatus: 0b0000_0001,
+			expectStatus: 0b0010_0101,
 		},
 		{
 			name:         "CMP Immediate with negative",
 			memory:       map[uint16]uint8{0x10: 0x05},
 			program:      []uint8{0xa9, 0x05, 0xc9, 0x06, 0x00},
-			expectStatus: 0b1000_0000,
+			expectStatus: 0b1010_0100,
 		},
 	}
 	for _, tt := range cases {
@@ -1041,19 +1041,19 @@ func TestCPUCPX(t *testing.T) {
 			name:         "CPX Immediate with zero",
 			memory:       map[uint16]uint8{0x10: 0x05},
 			program:      []uint8{0xa9, 0x05, 0xaa, 0xc9, 0x05, 0x00},
-			expectStatus: 0b0000_0011,
+			expectStatus: 0b0010_0111,
 		},
 		{
 			name:         "CPX Immediate with carry",
 			memory:       map[uint16]uint8{0x10: 0x05},
 			program:      []uint8{0xa9, 0x05, 0xaa, 0xc9, 0x04, 0x00},
-			expectStatus: 0b0000_0001,
+			expectStatus: 0b0010_0101,
 		},
 		{
 			name:         "CPX Immediate with negative",
 			memory:       map[uint16]uint8{0x10: 0x05},
 			program:      []uint8{0xa9, 0x05, 0xaa, 0xc9, 0x06, 0x00},
-			expectStatus: 0b1000_0000,
+			expectStatus: 0b1010_0100,
 		},
 	}
 	for _, tt := range cases {
@@ -1082,19 +1082,19 @@ func TestCPUCPY(t *testing.T) {
 			name:         "CPY Immediate with zero",
 			memory:       map[uint16]uint8{0x10: 0x05},
 			program:      []uint8{0xa9, 0x05, 0xa8, 0xc0, 0x05, 0x00},
-			expectStatus: 0b0000_0011,
+			expectStatus: 0b0010_0111,
 		},
 		{
 			name:         "CPY Immediate with carry",
 			memory:       map[uint16]uint8{0x10: 0x05},
 			program:      []uint8{0xa9, 0x05, 0xa8, 0xc0, 0x04, 0x00},
-			expectStatus: 0b0000_0001,
+			expectStatus: 0b0010_0101,
 		},
 		{
 			name:         "CPY Immediate with negative",
 			memory:       map[uint16]uint8{0x10: 0x05},
 			program:      []uint8{0xa9, 0x05, 0xa8, 0xc0, 0x06, 0x00},
-			expectStatus: 0b1000_0000,
+			expectStatus: 0b1010_0100,
 		},
 	}
 	for _, tt := range cases {
@@ -1148,7 +1148,7 @@ func TestCPUEOR(t *testing.T) {
 			name:            "EOR Immediate",
 			program:         []uint8{0xa9, 0x05, 0x49, 0x04, 0x00},
 			expectRegisterA: uint8(0x01),
-			expectStatus:    0b0000_0000,
+			expectStatus:    0b0010_0100,
 		},
 	}
 
@@ -1177,7 +1177,7 @@ func TestCPUORA(t *testing.T) {
 			name:            "ORA Immediate",
 			program:         []uint8{0xa9, 0x05, 0x09, 0x0a, 0x00},
 			expectRegisterA: uint8(0x0f),
-			expectStatus:    0b0000_0000,
+			expectStatus:    0b0010_0100,
 		},
 	}
 
@@ -1311,13 +1311,13 @@ func TestCPULSRAccumulator(t *testing.T) {
 			name:            "LSR Accumulator",
 			program:         []uint8{0xa9, 0x04, 0x4a, 0x00},
 			expectRegisterA: uint8(0x02),
-			expectStatus:    0b0000_0000,
+			expectStatus:    0b0010_0100,
 		},
 		{
 			name:            "LSR Accumulator with carry",
 			program:         []uint8{0xa9, 0x05, 0x4a, 0x00},
 			expectRegisterA: uint8(0x02),
-			expectStatus:    0b0000_0001,
+			expectStatus:    0b0010_0101,
 		},
 	}
 
@@ -1349,14 +1349,14 @@ func TestCPULSR(t *testing.T) {
 			memory:       map[uint16]uint8{},
 			program:      []uint8{0xa9, 0x04, 0x85, 0x0a, 0x46, 0x0a, 0x00},
 			expectMemory: map[uint16]uint8{0x0a: 0x02},
-			expectStatus: 0b0000_0000,
+			expectStatus: 0b0010_0100,
 		},
 		{
 			name:         "LSR ZeroPage with carry",
 			memory:       map[uint16]uint8{0x10: 0xff},
 			program:      []uint8{0xa9, 0x05, 0x85, 0x0a, 0x46, 0x0a, 0x00},
 			expectMemory: map[uint16]uint8{0x0a: 0x02},
-			expectStatus: 0b0000_0001,
+			expectStatus: 0b0010_0101,
 		},
 	}
 
@@ -1453,7 +1453,7 @@ func TestCPUPHP(t *testing.T) {
 		{
 			name:        "PHP",
 			program:     []uint8{0xa9, 0x00, 0x08, 0x00},
-			expectStack: map[uint16]uint8{0x01fd: 0b0011_0010},
+			expectStack: map[uint16]uint8{0x01fd: 0b0011_0110},
 		},
 	}
 
@@ -1480,7 +1480,7 @@ func TestCPUPLP(t *testing.T) {
 		{
 			name:         "PLP",
 			program:      []uint8{0xa9, 0x00, 0x08, 0xa9, 0x01, 0x28, 0x00},
-			expectStatus: uint8(0b0010_0010),
+			expectStatus: uint8(0b0010_0110),
 		},
 	}
 
@@ -1507,13 +1507,13 @@ func TestCPUROLAccumulator(t *testing.T) {
 			name:            "ROL Accumulator",
 			program:         []uint8{0xa9, 0x04, 0x2a, 0x00},
 			expectRegisterA: uint8(0x08),
-			expectStatus:    0b0000_0000,
+			expectStatus:    0b0010_0100,
 		},
 		{
 			name:            "ROL Accumulator with carry",
 			program:         []uint8{0xa9, 0x85, 0x38, 0x2a, 0x00},
 			expectRegisterA: uint8(0b0000_1011),
-			expectStatus:    0b0000_0001,
+			expectStatus:    0b0010_0101,
 		},
 	}
 
@@ -1542,13 +1542,13 @@ func TestCPUROL(t *testing.T) {
 			name:         "ROL ZeroPage",
 			program:      []uint8{0xa9, 0x04, 0x85, 0xb1, 0x26, 0xb1, 0x00},
 			expectMemory: map[uint16]uint8{0xb1: 0x08},
-			expectStatus: 0b0000_0000,
+			expectStatus: 0b0010_0100,
 		},
 		{
 			name:         "ROL ZeroPage with carry",
 			program:      []uint8{0xa9, 0x85, 0x85, 0xb1, 0x38, 0x26, 0xb1, 0x00},
 			expectMemory: map[uint16]uint8{0xb1: 0b0000_1011},
-			expectStatus: 0b0000_0001,
+			expectStatus: 0b0010_0101,
 		},
 	}
 
@@ -1582,13 +1582,13 @@ func TestCPURORAccumulator(t *testing.T) {
 			name:            "ROR Accumulator",
 			program:         []uint8{0xa9, 0x04, 0x6a, 0x00},
 			expectRegisterA: uint8(0x02),
-			expectStatus:    0b0000_0000,
+			expectStatus:    0b0010_0100,
 		},
 		{
 			name:            "ROR Accumulator with carry",
 			program:         []uint8{0xa9, 0x85, 0x38, 0x6a, 0x00},
 			expectRegisterA: uint8(0b1100_0010),
-			expectStatus:    0b1000_0001,
+			expectStatus:    0b1010_0101,
 		},
 	}
 
@@ -1617,13 +1617,13 @@ func TestCPUROR(t *testing.T) {
 			name:         "ROR ZeroPage",
 			program:      []uint8{0xa9, 0x04, 0x85, 0xb1, 0x66, 0xb1, 0x00},
 			expectMemory: map[uint16]uint8{0xb1: 0x02},
-			expectStatus: 0b0000_0000,
+			expectStatus: 0b0010_0100,
 		},
 		{
 			name:         "ROR ZeroPage with carry",
 			program:      []uint8{0xa9, 0x85, 0x85, 0xb1, 0x38, 0x66, 0xb1, 0x00},
 			expectMemory: map[uint16]uint8{0xb1: 0b1100_0010},
-			expectStatus: 0b1000_0001,
+			expectStatus: 0b1010_0101,
 		},
 	}
 
@@ -1672,26 +1672,26 @@ func TestCPUSBC(t *testing.T) {
 			name:            "SBC Immediate",
 			program:         []uint8{0xa9, 0x05, 0xe9, 0x03, 0x00},
 			expectRegisterA: uint8(0x01),
-			expectStatus:    0b0000_0001,
+			expectStatus:    0b0010_0101,
 		},
 		{
 			name:            "SBC Immediate with carry",
 			program:         []uint8{0xa9, 0x05, 0x38, 0xe9, 0x05, 0x00},
 			expectRegisterA: uint8(0x00),
-			expectStatus:    0b0000_0011,
+			expectStatus:    0b0010_0111,
 		},
 		{
 			name:            "SBC Immediate with minux",
 			program:         []uint8{0xa9, 0x05, 0xe9, 0x05, 0x00},
 			expectRegisterA: uint8(0xff),
-			expectStatus:    0b1000_0000,
+			expectStatus:    0b1010_0100,
 		},
 
 		{
 			name:            "SBC Immediate with overflow",
 			program:         []uint8{0xa9, 0xb0, 0x38, 0xe9, 0x7f, 0x00},
 			expectRegisterA: uint8(0x31),
-			expectStatus:    0b0100_0001,
+			expectStatus:    0b0110_0101,
 		},
 	}
 
