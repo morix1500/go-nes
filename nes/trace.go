@@ -79,7 +79,12 @@ func trace(cpu *CPU) string {
 				tmp = fmt.Sprintf("$%04X", address)
 			}
 		case ABSOLUTE:
-			tmp = fmt.Sprintf("$%04X = %02X", memoryAddr, storedValue)
+			if code == 0x4c || code == 0x20 {
+				// jmp/jsr absolute
+				tmp = fmt.Sprintf("$%04X", address)
+			} else {
+				tmp = fmt.Sprintf("$%04X = %02X", address, storedValue)
+			}
 		case ABSOLUTE_X:
 			tmp = fmt.Sprintf("$%04X,X @ %04X = %02X", address, memoryAddr, storedValue)
 		case ABSOLUTE_Y:
