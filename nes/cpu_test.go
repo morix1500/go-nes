@@ -1209,8 +1209,9 @@ func TestCPUJMP(t *testing.T) {
 		},
 		{
 			name:     "JMP Indirect",
+			memory:   map[uint16]uint8{0x1005: 0x20, 0x1006: 0x11},
 			program:  []uint8{0x6c, 0x05, 0x10, 0x00},
-			expectPC: uint16(0x1006),
+			expectPC: uint16(0x1121),
 		},
 		{
 			name:     "JMP Indirect with page boundary",

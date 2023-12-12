@@ -330,7 +330,7 @@ func (c *CPU) jmp(mode AddressingMode) {
 		hi := c.readMemory(addr & 0xff00)
 		indirectAddr = uint16(hi)<<8 | uint16(lo)
 	} else {
-		indirectAddr = addr
+		indirectAddr = c.readMemory16(addr)
 	}
 
 	c.programCounter = indirectAddr

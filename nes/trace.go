@@ -14,7 +14,8 @@ func trace(cpu *CPU) string {
 	hexDump := []uint8{}
 	hexDump = append(hexDump, code)
 
-	var memoryAddr, storedValue uint16
+	var memoryAddr uint16
+	var storedValue uint8
 
 	switch opsInfo.Mode {
 	case IMMEDIATE, IMPLIED, ACCUMULATOR, RELATIVE, INDIRECT:
@@ -22,7 +23,7 @@ func trace(cpu *CPU) string {
 		storedValue = 0
 	default:
 		memoryAddr = cpu.getAbsoluteAddress(opsInfo.Mode, begin+1)
-		storedValue = cpu.readMemory16(memoryAddr)
+		storedValue = cpu.readMemory(memoryAddr)
 	}
 
 	var tmp string
