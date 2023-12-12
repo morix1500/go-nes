@@ -90,29 +90,25 @@ func (c *CPU) sty(mode AddressingMode) {
 	c.writeMemory(addr, c.registerY)
 }
 
-func (c *CPU) adc(mode AddressingMode) {
-	addr := c.getOperandAddress(mode)
+func (cpu *CPU) adc(mode AddressingMode) {
+	addr := cpu.getOperandAddress(mode)
+	a := cpu.registerA
+	b := cpu.readMemory(addr)
+	c := cpu.status & CPU_FLAG_CARRY
 
-	// Aレジスタの値とメモリの値、そしてキャリーフラグの値（0または1）を加えます。
-	tmpValue := uint16(c.registerA) + uint16(c.readMemory(addr)) + uint16(c.status&CPU_FLAG_CARRY)
+	cpu.setRegisterA(a + b + c)
 
-	// 加算の結果が255を超える場合、キャリーフラグをセットします。それ以外の場合はキャリーフラグをクリアします。
-	if tmpValue&0x100 != 0 {
-		tmpValue -= (0xff + 1)
-		c.status |= CPU_FLAG_CARRY
+	if int(a)+int(b)+int(c) > 0xff {
+		cpu.status |= CPU_FLAG_CARRY
 	} else {
-		c.status &= ^CPU_FLAG_CARRY
+		cpu.status &= ^CPU_FLAG_CARRY
 	}
 
-	// 加算の結果をAレジスタに格納します。結果が256以上の場合、結果から256を引いた値がAレジスタに格納されます
-	c.setRegisterA(uint8(tmpValue & 0xff))
-
-	// 結果がオーバーフロー（符号付き加算において結果が-128から127の範囲を超える）した場合、オーバーフローフラグをセットします。それ以外の場合はオーバーフローフラグをクリアします。
-	// 符号付き整数の加算は存在しないため、マイナスの場合は考慮していない
-	if tmpValue > 0x7f {
-		c.status |= CPU_FLAG_OVERFLOW
+	// 同じ符号同士の演算かつ計算結果の符号が元の符号と異なる場合オーバーフローとなる
+	if (a^b)&0x80 == 0 && (a^cpu.registerA)&0x80 != 0 {
+		cpu.status |= CPU_FLAG_OVERFLOW
 	} else {
-		c.status &= ^CPU_FLAG_OVERFLOW
+		cpu.status &= ^CPU_FLAG_OVERFLOW
 	}
 }
 
