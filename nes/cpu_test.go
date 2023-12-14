@@ -1752,3 +1752,14 @@ func TestCPUTYA(t *testing.T) {
 	cpu.Run()
 	assert.Equal(t, uint8(0x05), cpu.registerA)
 }
+
+func TestCPUSAX(t *testing.T) {
+	program := []uint8{0x87, 0x01, 0x00}
+	bus := NewBus(createTestCartridgeForCPUTest(program))
+	cpu := NewCPU(bus)
+	cpu.registerX = 0xaa
+	cpu.registerA = 0x8c
+	cpu.programCounter = 0x8000
+	cpu.Run()
+	assert.Equal(t, uint8(0x88), cpu.readMemory(0x01))
+}

@@ -199,6 +199,11 @@ var CPU_OPS_CODES map[uint8]OpeCode = map[uint8]OpeCode{
 	0xb7: {Mnemonic: "*LAX", Length: 2, Cycles: 4, Mode: ZERO_PAGE_Y},
 	0xbf: {Mnemonic: "*LAX", Length: 3, Cycles: 4 /* +1 if page crossed*/, Mode: ABSOLUTE_Y},
 
+	0x83: {Mnemonic: "*SAX", Length: 2, Cycles: 6, Mode: INDIRECT_X},
+	0x87: {Mnemonic: "*SAX", Length: 2, Cycles: 3, Mode: ZERO_PAGE},
+	0x8f: {Mnemonic: "*SAX", Length: 3, Cycles: 4, Mode: ABSOLUTE},
+	0x97: {Mnemonic: "*SAX", Length: 2, Cycles: 4, Mode: ZERO_PAGE_Y},
+
 	// NOPs
 	0x1a: {Mnemonic: "*NOP", Length: 1, Cycles: 2, Mode: IMPLIED},
 	0x3a: {Mnemonic: "*NOP", Length: 1, Cycles: 2, Mode: IMPLIED},
