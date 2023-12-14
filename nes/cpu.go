@@ -523,6 +523,11 @@ func (c *CPU) sax(mode AddressingMode) {
 	c.writeMemory(addr, c.registerA&c.registerX)
 }
 
+func (c *CPU) dcp(mode AddressingMode) {
+	c.dec(mode)
+	c.cmp(mode)
+}
+
 func (c *CPU) updateZeroAndNegativeFlags(result uint8) {
 	if result == 0 {
 		c.status |= CPU_FLAG_ZERO
@@ -591,8 +596,8 @@ func (c *CPU) Reset() {
 	c.registerX = 0
 	c.registerY = 0
 	c.status = 0b00100100
-	c.programCounter = c.readMemory16(0xFFFC)
-	//c.programCounter = 0xc000
+	//c.programCounter = c.readMemory16(0xFFFC)
+	c.programCounter = 0xc000
 	c.stackPointer = 0xfd
 }
 
@@ -696,7 +701,7 @@ func (c *CPU) Run() {
 			c.rti()
 		case "RTS":
 			c.rts()
-		case "SBC":
+		case "SBC", "*SBC":
 			c.sbc(opsInfo.Mode)
 		case "SEC":
 			c.sec()
@@ -726,6 +731,8 @@ func (c *CPU) Run() {
 			c.lax(opsInfo.Mode)
 		case "*SAX":
 			c.sax(opsInfo.Mode)
+		case "*DCP":
+			c.dcp(opsInfo.Mode)
 		}
 		if programCounterState == c.programCounter {
 			c.programCounter += uint16(opsInfo.Length - 1)

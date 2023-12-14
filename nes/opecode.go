@@ -204,6 +204,18 @@ var CPU_OPS_CODES map[uint8]OpeCode = map[uint8]OpeCode{
 	0x8f: {Mnemonic: "*SAX", Length: 3, Cycles: 4, Mode: ABSOLUTE},
 	0x97: {Mnemonic: "*SAX", Length: 2, Cycles: 4, Mode: ZERO_PAGE_Y},
 
+	// RMW instructions
+	0xc3: {Mnemonic: "*DCP", Length: 2, Cycles: 8, Mode: INDIRECT_X},
+	0xc7: {Mnemonic: "*DCP", Length: 2, Cycles: 5, Mode: ZERO_PAGE},
+	0xcf: {Mnemonic: "*DCP", Length: 3, Cycles: 6, Mode: ABSOLUTE},
+	0xd3: {Mnemonic: "*DCP", Length: 2, Cycles: 8, Mode: INDIRECT_Y},
+	0xd7: {Mnemonic: "*DCP", Length: 2, Cycles: 6, Mode: ZERO_PAGE_X},
+	0xdb: {Mnemonic: "*DCP", Length: 3, Cycles: 7, Mode: ABSOLUTE_Y},
+	0xdf: {Mnemonic: "*DCP", Length: 3, Cycles: 7, Mode: ABSOLUTE_X},
+
+	// Duplicated instructions
+	0xeb: {Mnemonic: "*SBC", Length: 2, Cycles: 2, Mode: IMMEDIATE},
+
 	// NOPs
 	0x1a: {Mnemonic: "*NOP", Length: 1, Cycles: 2, Mode: IMPLIED},
 	0x3a: {Mnemonic: "*NOP", Length: 1, Cycles: 2, Mode: IMPLIED},
