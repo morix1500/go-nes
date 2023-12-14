@@ -221,6 +221,14 @@ var CPU_OPS_CODES map[uint8]OpeCode = map[uint8]OpeCode{
 	0xfb: {Mnemonic: "*ISB", Length: 3, Cycles: 7, Mode: ABSOLUTE_Y},
 	0xff: {Mnemonic: "*ISB", Length: 3, Cycles: 7, Mode: ABSOLUTE_X},
 
+	0x23: {Mnemonic: "*RLA", Length: 2, Cycles: 8, Mode: INDIRECT_X},
+	0x27: {Mnemonic: "*RLA", Length: 2, Cycles: 5, Mode: ZERO_PAGE},
+	0x2f: {Mnemonic: "*RLA", Length: 3, Cycles: 6, Mode: ABSOLUTE},
+	0x33: {Mnemonic: "*RLA", Length: 2, Cycles: 8, Mode: INDIRECT_Y},
+	0x37: {Mnemonic: "*RLA", Length: 2, Cycles: 6, Mode: ZERO_PAGE_X},
+	0x3b: {Mnemonic: "*RLA", Length: 3, Cycles: 7, Mode: ABSOLUTE_Y},
+	0x3f: {Mnemonic: "*RLA", Length: 3, Cycles: 7, Mode: ABSOLUTE_X},
+
 	0x03: {Mnemonic: "*SLO", Length: 2, Cycles: 8, Mode: INDIRECT_X},
 	0x07: {Mnemonic: "*SLO", Length: 2, Cycles: 5, Mode: ZERO_PAGE},
 	0x0f: {Mnemonic: "*SLO", Length: 3, Cycles: 6, Mode: ABSOLUTE},
