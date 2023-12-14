@@ -528,6 +528,11 @@ func (c *CPU) dcp(mode AddressingMode) {
 	c.cmp(mode)
 }
 
+func (c *CPU) isb(mode AddressingMode) {
+	c.inc(mode)
+	c.sbc(mode)
+}
+
 func (c *CPU) updateZeroAndNegativeFlags(result uint8) {
 	if result == 0 {
 		c.status |= CPU_FLAG_ZERO
@@ -733,6 +738,8 @@ func (c *CPU) Run() {
 			c.sax(opsInfo.Mode)
 		case "*DCP":
 			c.dcp(opsInfo.Mode)
+		case "*ISB":
+			c.isb(opsInfo.Mode)
 		}
 		if programCounterState == c.programCounter {
 			c.programCounter += uint16(opsInfo.Length - 1)

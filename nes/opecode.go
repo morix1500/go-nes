@@ -213,6 +213,14 @@ var CPU_OPS_CODES map[uint8]OpeCode = map[uint8]OpeCode{
 	0xdb: {Mnemonic: "*DCP", Length: 3, Cycles: 7, Mode: ABSOLUTE_Y},
 	0xdf: {Mnemonic: "*DCP", Length: 3, Cycles: 7, Mode: ABSOLUTE_X},
 
+	0xe3: {Mnemonic: "*ISB", Length: 2, Cycles: 8, Mode: INDIRECT_X},
+	0xe7: {Mnemonic: "*ISB", Length: 2, Cycles: 5, Mode: ZERO_PAGE},
+	0xef: {Mnemonic: "*ISB", Length: 3, Cycles: 6, Mode: ABSOLUTE},
+	0xf3: {Mnemonic: "*ISB", Length: 2, Cycles: 8, Mode: INDIRECT_Y},
+	0xf7: {Mnemonic: "*ISB", Length: 2, Cycles: 6, Mode: ZERO_PAGE_X},
+	0xfb: {Mnemonic: "*ISB", Length: 3, Cycles: 7, Mode: ABSOLUTE_Y},
+	0xff: {Mnemonic: "*ISB", Length: 3, Cycles: 7, Mode: ABSOLUTE_X},
+
 	// Duplicated instructions
 	0xeb: {Mnemonic: "*SBC", Length: 2, Cycles: 2, Mode: IMMEDIATE},
 
