@@ -533,6 +533,11 @@ func (c *CPU) isb(mode AddressingMode) {
 	c.sbc(mode)
 }
 
+func (c *CPU) slo(mode AddressingMode) {
+	c.asl(mode)
+	c.ora(mode)
+}
+
 func (c *CPU) updateZeroAndNegativeFlags(result uint8) {
 	if result == 0 {
 		c.status |= CPU_FLAG_ZERO
@@ -740,6 +745,8 @@ func (c *CPU) Run() {
 			c.dcp(opsInfo.Mode)
 		case "*ISB":
 			c.isb(opsInfo.Mode)
+		case "*SLO":
+			c.slo(opsInfo.Mode)
 		}
 		if programCounterState == c.programCounter {
 			c.programCounter += uint16(opsInfo.Length - 1)
