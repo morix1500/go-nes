@@ -191,6 +191,14 @@ var CPU_OPS_CODES map[uint8]OpeCode = map[uint8]OpeCode{
 	// Unofficial Opecodes
 	// -------------------------
 
+	// Combined Operations
+	0xa3: {Mnemonic: "*LAX", Length: 2, Cycles: 6, Mode: INDIRECT_X},
+	0xa7: {Mnemonic: "*LAX", Length: 2, Cycles: 3, Mode: ZERO_PAGE},
+	0xaf: {Mnemonic: "*LAX", Length: 3, Cycles: 4, Mode: ABSOLUTE},
+	0xb3: {Mnemonic: "*LAX", Length: 2, Cycles: 5 /* +1 if page crossed*/, Mode: INDIRECT_Y},
+	0xb7: {Mnemonic: "*LAX", Length: 2, Cycles: 4, Mode: ZERO_PAGE_Y},
+	0xbf: {Mnemonic: "*LAX", Length: 3, Cycles: 4 /* +1 if page crossed*/, Mode: ABSOLUTE_Y},
+
 	// NOPs
 	0x1a: {Mnemonic: "*NOP", Length: 1, Cycles: 2, Mode: IMPLIED},
 	0x3a: {Mnemonic: "*NOP", Length: 1, Cycles: 2, Mode: IMPLIED},

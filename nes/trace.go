@@ -25,6 +25,9 @@ func trace(cpu *CPU) string {
 		memoryAddr = cpu.getAbsoluteAddress(opsInfo.Mode, begin+1)
 		storedValue = cpu.readMemory(memoryAddr)
 	}
+	if begin == 0xE545 {
+		fmt.Print()
+	}
 
 	var tmp string
 

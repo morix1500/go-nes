@@ -513,6 +513,11 @@ func (c *CPU) tya() {
 	c.setRegisterA(c.registerY)
 }
 
+func (c *CPU) lax(mode AddressingMode) {
+	c.lda(mode)
+	c.tax()
+}
+
 func (c *CPU) updateZeroAndNegativeFlags(result uint8) {
 	if result == 0 {
 		c.status |= CPU_FLAG_ZERO
@@ -712,6 +717,8 @@ func (c *CPU) Run() {
 			c.txs()
 		case "TYA":
 			c.tya()
+		case "*LAX":
+			c.lax(opsInfo.Mode)
 		}
 		if programCounterState == c.programCounter {
 			c.programCounter += uint16(opsInfo.Length - 1)
