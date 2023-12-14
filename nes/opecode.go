@@ -186,4 +186,37 @@ var CPU_OPS_CODES map[uint8]OpeCode = map[uint8]OpeCode{
 	0x8a: {Mnemonic: "TXA", Length: 1, Cycles: 2, Mode: IMPLIED},
 	0x9a: {Mnemonic: "TXS", Length: 1, Cycles: 2, Mode: IMPLIED},
 	0x98: {Mnemonic: "TYA", Length: 1, Cycles: 2, Mode: IMPLIED},
+
+	// -------------------------
+	// Unofficial Opecodes
+	// -------------------------
+
+	// NOPs
+	0x1a: {Mnemonic: "*NOP", Length: 1, Cycles: 2, Mode: IMPLIED},
+	0x3a: {Mnemonic: "*NOP", Length: 1, Cycles: 2, Mode: IMPLIED},
+	0x5a: {Mnemonic: "*NOP", Length: 1, Cycles: 2, Mode: IMPLIED},
+	0x7a: {Mnemonic: "*NOP", Length: 1, Cycles: 2, Mode: IMPLIED},
+	0xda: {Mnemonic: "*NOP", Length: 1, Cycles: 2, Mode: IMPLIED},
+	0xfa: {Mnemonic: "*NOP", Length: 1, Cycles: 2, Mode: IMPLIED},
+	0x80: {Mnemonic: "*NOP", Length: 2, Cycles: 2, Mode: IMMEDIATE},
+	0x82: {Mnemonic: "*NOP", Length: 2, Cycles: 2, Mode: IMMEDIATE},
+	0x89: {Mnemonic: "*NOP", Length: 2, Cycles: 2, Mode: IMMEDIATE},
+	0xc2: {Mnemonic: "*NOP", Length: 2, Cycles: 2, Mode: IMMEDIATE},
+	0xe2: {Mnemonic: "*NOP", Length: 2, Cycles: 2, Mode: IMMEDIATE},
+	0x0c: {Mnemonic: "*NOP", Length: 3, Cycles: 4, Mode: ABSOLUTE},
+	0x1c: {Mnemonic: "*NOP", Length: 3, Cycles: 4 /* +1 if page crossed*/, Mode: ABSOLUTE_X},
+	0x3c: {Mnemonic: "*NOP", Length: 3, Cycles: 4 /* +1 if page crossed*/, Mode: ABSOLUTE_X},
+	0x5c: {Mnemonic: "*NOP", Length: 3, Cycles: 4 /* +1 if page crossed*/, Mode: ABSOLUTE_X},
+	0x7c: {Mnemonic: "*NOP", Length: 3, Cycles: 4 /* +1 if page crossed*/, Mode: ABSOLUTE_X},
+	0xdc: {Mnemonic: "*NOP", Length: 3, Cycles: 4 /* +1 if page crossed*/, Mode: ABSOLUTE_X},
+	0xfc: {Mnemonic: "*NOP", Length: 3, Cycles: 4 /* +1 if page crossed*/, Mode: ABSOLUTE_X},
+	0x04: {Mnemonic: "*NOP", Length: 2, Cycles: 3, Mode: ZERO_PAGE},
+	0x44: {Mnemonic: "*NOP", Length: 2, Cycles: 3, Mode: ZERO_PAGE},
+	0x64: {Mnemonic: "*NOP", Length: 2, Cycles: 3, Mode: ZERO_PAGE},
+	0x14: {Mnemonic: "*NOP", Length: 2, Cycles: 4, Mode: ZERO_PAGE_X},
+	0x34: {Mnemonic: "*NOP", Length: 2, Cycles: 4, Mode: ZERO_PAGE_X},
+	0x54: {Mnemonic: "*NOP", Length: 2, Cycles: 4, Mode: ZERO_PAGE_X},
+	0x74: {Mnemonic: "*NOP", Length: 2, Cycles: 4, Mode: ZERO_PAGE_X},
+	0xd4: {Mnemonic: "*NOP", Length: 2, Cycles: 4, Mode: ZERO_PAGE_X},
+	0xf4: {Mnemonic: "*NOP", Length: 2, Cycles: 4, Mode: ZERO_PAGE_X},
 }

@@ -51,9 +51,16 @@ func trace(cpu *CPU) string {
 			tmp = fmt.Sprintf("($%02X,X) @ %02X = %04X = %02X", address, (address + cpu.registerX), memoryAddr, storedValue)
 		case INDIRECT_Y:
 			tmp = fmt.Sprintf("($%02X),Y = %04X @ %04X = %02X", address, (memoryAddr - uint16(cpu.registerY)), memoryAddr, storedValue)
+		case RELATIVE:
+			address := uint16(cpu.readMemory(begin + 1))
+			if address > 0x7f {
+				address = uint16(address) - uint16(0x100)
+			}
+			address = begin + address + 2
+			tmp = fmt.Sprintf("$%04X", address)
 		default:
 			var add uint
-			add = uint(begin+2) + uint(address)
+			add = uint(begin) + 2 + uint(address)
 			tmp = fmt.Sprintf("$%04X", add)
 		}
 	case 3:

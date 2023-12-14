@@ -666,7 +666,7 @@ func (c *CPU) Run() {
 			c.ldy(opsInfo.Mode)
 		case "LSR":
 			c.lsr(opsInfo.Mode)
-		case "NOP":
+		case "NOP", "*NOP":
 			// 何もしない
 		case "ORA":
 			c.ora(opsInfo.Mode)

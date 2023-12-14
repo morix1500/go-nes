@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	nestestFile, err := os.Open("../nestest.log")
+	nestestFile, err := os.Open("nestest.log")
 	if err != nil {
 		fmt.Println("Error opening nestest.log:", err)
 		return
