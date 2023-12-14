@@ -237,6 +237,14 @@ var CPU_OPS_CODES map[uint8]OpeCode = map[uint8]OpeCode{
 	0x1b: {Mnemonic: "*SLO", Length: 3, Cycles: 7, Mode: ABSOLUTE_Y},
 	0x1f: {Mnemonic: "*SLO", Length: 3, Cycles: 7, Mode: ABSOLUTE_X},
 
+	0x43: {Mnemonic: "*SRE", Length: 2, Cycles: 8, Mode: INDIRECT_X},
+	0x47: {Mnemonic: "*SRE", Length: 2, Cycles: 5, Mode: ZERO_PAGE},
+	0x4f: {Mnemonic: "*SRE", Length: 3, Cycles: 6, Mode: ABSOLUTE},
+	0x53: {Mnemonic: "*SRE", Length: 2, Cycles: 8, Mode: INDIRECT_Y},
+	0x57: {Mnemonic: "*SRE", Length: 2, Cycles: 6, Mode: ZERO_PAGE_X},
+	0x5b: {Mnemonic: "*SRE", Length: 3, Cycles: 7, Mode: ABSOLUTE_Y},
+	0x5f: {Mnemonic: "*SRE", Length: 3, Cycles: 7, Mode: ABSOLUTE_X},
+
 	// Duplicated instructions
 	0xeb: {Mnemonic: "*SBC", Length: 2, Cycles: 2, Mode: IMMEDIATE},
 
