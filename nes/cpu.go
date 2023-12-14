@@ -548,6 +548,11 @@ func (c *CPU) sre(mode AddressingMode) {
 	c.eor(mode)
 }
 
+func (c *CPU) rra(mode AddressingMode) {
+	c.ror(mode)
+	c.adc(mode)
+}
+
 func (c *CPU) updateZeroAndNegativeFlags(result uint8) {
 	if result == 0 {
 		c.status |= CPU_FLAG_ZERO
@@ -759,6 +764,8 @@ func (c *CPU) Run() {
 			c.slo(opsInfo.Mode)
 		case "*RLA":
 			c.rla(opsInfo.Mode)
+		case "*RRA":
+			c.rra(opsInfo.Mode)
 		case "*SRE":
 			c.sre(opsInfo.Mode)
 		}
