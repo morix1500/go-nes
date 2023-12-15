@@ -9,7 +9,11 @@ import (
 )
 
 func main() {
-	filepath := "nestest.nes"
+	filepath := os.Args[1]
+	if filepath == "" {
+		log.Fatal("Please specify a file path")
+	}
+
 	data, err := os.ReadFile(filepath)
 	if err != nil {
 		log.Fatal(err)

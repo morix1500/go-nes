@@ -2,7 +2,7 @@ run:
 	go run main.go
 
 cpu-test:
-	CPU_TEST=true go run main.go > res.log
+	CPU_TEST=true go run main.go nestest/nestest.nes > res.log
 	pushd ./nestest && go run nestest_diff.go > ../diff.log && popd
 
 clean:
