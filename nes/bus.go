@@ -1,5 +1,7 @@
 package nes
 
+import "fmt"
+
 //  _______________ $10000  _______________
 // | PRG-ROM       |       |               |
 // | Upper Bank    |       |               |
@@ -31,6 +33,7 @@ package nes
 type Bus struct {
 	CpuVRAM   [2048]uint8
 	Cartridge *Cartridge
+	PPU       *PPU
 }
 
 const (
@@ -41,9 +44,11 @@ const (
 )
 
 func NewBus(cartridge *Cartridge) *Bus {
+	ppu := NewPPU(cartridge.CharacterRom, cartridge.ScreenMirroring)
 	return &Bus{
 		CpuVRAM:   [2048]uint8{},
 		Cartridge: cartridge,
+		PPU:       ppu,
 	}
 }
 
@@ -51,10 +56,13 @@ func (b *Bus) ReadMemory(addr uint16) uint8 {
 	if addr >= RAM && addr <= RAM_MIRRORS_END {
 		mirrorDownAddr := addr & 0b111_1111_1111
 		return b.CpuVRAM[mirrorDownAddr]
-	} else if addr >= PPU_REGISTERS && addr <= PPU_REGISTERS_MIRRORS_END {
-		//mirrorDownAddr := addr & 0b00100000_00000111
-		// TODO PPU is not supported yet
-		return 0
+	} else if addr == 0x2000 || addr == 0x2001 || addr == 0x2003 || addr == 0x2005 || addr == 0x2006 || addr == 0x4014 {
+		panic(fmt.Sprintf("attempt to read from write-only PPU address: %d", addr))
+	} else if addr == 0x2007 {
+		return b.PPU.ReadData()
+	} else if addr >= 0x2008 && addr <= PPU_REGISTERS_MIRRORS_END {
+		mirrorDownAddr := addr & 0b00100000_00000111
+		return b.ReadMemory(mirrorDownAddr)
 	} else if addr >= 0x8000 && addr <= 0xFFFF {
 		return b.ReadProgramRom(addr)
 	}
@@ -65,10 +73,15 @@ func (b *Bus) WriteMemory(addr uint16, data uint8) {
 	if addr >= RAM && addr <= RAM_MIRRORS_END {
 		mirrorDownAddr := addr & 0b111_1111_1111
 		b.CpuVRAM[mirrorDownAddr] = data
-	} else if addr >= PPU_REGISTERS && addr <= PPU_REGISTERS_MIRRORS_END {
-		//mirrorDownAddr := addr & 0b00100000_00000111
-		// TODO PPU is not supported yet
-		//b.CpuVRAM[mirrorDownAddr] = data
+	} else if addr == 0x2000 {
+		b.PPU.WriteToPPUCTRL(data)
+	} else if addr == 0x2006 {
+		b.PPU.WriteToPPUAddr(data)
+	} else if addr == 0x2007 {
+		b.PPU.WriteData(data)
+	} else if addr >= 0x2008 && addr <= PPU_REGISTERS_MIRRORS_END {
+		mirrorDownAddr := addr & 0b00100000_00000111
+		b.CpuVRAM[mirrorDownAddr] = data
 	} else if addr >= 0x8000 && addr <= 0xFFFF {
 		panic("Attempt to write to Cartridge ROM space")
 	}
