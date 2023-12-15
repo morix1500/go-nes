@@ -2,6 +2,7 @@ package nes
 
 import (
 	"fmt"
+	"os"
 )
 
 type AddressingMode uint8
@@ -621,8 +622,10 @@ func (c *CPU) Reset() {
 	c.registerX = 0
 	c.registerY = 0
 	c.status = 0b00100100
-	//c.programCounter = c.readMemory16(0xFFFC)
-	c.programCounter = 0xc000
+	c.programCounter = c.readMemory16(0xFFFC)
+	if os.Getenv("CPU_TEST") == "true" {
+		c.programCounter = 0xc000
+	}
 	c.stackPointer = 0xfd
 }
 
