@@ -2,34 +2,6 @@ package nes
 
 import "fmt"
 
-const (
-	// Control Register
-	// 7  bit  0
-	// ---- ----
-	// VPHB SINN
-	// |||| ||||
-	// |||| ||++- Base nametable address
-	// |||| ||    (0 = $2000; 1 = $2400; 2 = $2800; 3 = $2C00)
-	// |||| |+--- VRAM address increment per CPU read/write of PPUDATA
-	// |||| |     (0: add 1, going across; 1: add 32, going down)
-	// |||| +---- Sprite pattern table address for 8x8 sprites
-	// ||||       (0: $0000; 1: $1000; ignored in 8x16 mode)
-	// |||+------ Background pattern table address (0: $0000; 1: $1000)
-	// ||+------- Sprite size (0: 8x8 pixels; 1: 8x16 pixels)
-	// |+-------- PPU master/slave select
-	// |          (0: read backdrop from EXT pins; 1: output color on EXT pins)
-	// +--------- Generate an NMI at the start of the
-	//            vertical blanking interval (0: off; 1: on)
-	CR_NAMETABLE1              uint8 = 0b0000_0001
-	CR_NAMETABLE2              uint8 = 0b0000_0010
-	CR_VRAM_ADD_INCREMENT      uint8 = 0b0000_0100
-	CR_SPRITE_PATTERN_ADDR     uint8 = 0b0000_1000
-	CR_BACKGROUND_PATTERN_ADDR uint8 = 0b0001_0000
-	CR_SPRITE_SIZE             uint8 = 0b0010_0000
-	CR_MASTER_SLAVE_SELECT     uint8 = 0b0100_0000
-	CR_GENERATE_NMI            uint8 = 0b1000_0000
-)
-
 type PPU struct {
 	CharacterRom       []uint8
 	PaletteTable       [32]uint8
@@ -39,6 +11,7 @@ type PPU struct {
 	Mirroring          Mirroring
 	Addr               AddrRegister
 	Ctrl               ControlRegister
+	Status             Status
 }
 
 func NewPPU(characterRom []uint8, mirroring Mirroring) *PPU {
@@ -50,6 +23,7 @@ func NewPPU(characterRom []uint8, mirroring Mirroring) *PPU {
 		Mirroring:    mirroring,
 		Addr:         *NewAddrRegister(),
 		Ctrl:         *NewControlRegister(),
+		Status:       *NewStatus(),
 	}
 }
 
@@ -124,7 +98,7 @@ func (p *PPU) mirrorVRAMAddr(addr uint16) uint16 {
 	nameTable := vramIndex / 0x400     // to the name table index
 
 	var result uint16
-	if p.Mirroring == MIRROR_VERTICAL && nameTable == 2 {
+	if p.Mirroring == MIRROR_VERTICAL && (nameTable == 2 || nameTable == 3) {
 		result = vramIndex - 0x800
 	} else if p.Mirroring == MIRROR_HORIZONTAL && nameTable == 2 {
 		result = vramIndex - 0x400
@@ -135,6 +109,13 @@ func (p *PPU) mirrorVRAMAddr(addr uint16) uint16 {
 	} else {
 		result = vramIndex
 	}
+	return result
+}
+
+func (p *PPU) ReadStatus() uint8 {
+	result := p.Status.Bits
+	p.Status.SetVblankStatus(false)
+	p.Addr.ResetLatch()
 	return result
 }
 
@@ -189,6 +170,34 @@ func (a *AddrRegister) Get() uint16 {
 	return uint16(a.High)<<8 | uint16(a.Low)
 }
 
+const (
+	// Control Register
+	// 7  bit  0
+	// ---- ----
+	// VPHB SINN
+	// |||| ||||
+	// |||| ||++- Base nametable address
+	// |||| ||    (0 = $2000; 1 = $2400; 2 = $2800; 3 = $2C00)
+	// |||| |+--- VRAM address increment per CPU read/write of PPUDATA
+	// |||| |     (0: add 1, going across; 1: add 32, going down)
+	// |||| +---- Sprite pattern table address for 8x8 sprites
+	// ||||       (0: $0000; 1: $1000; ignored in 8x16 mode)
+	// |||+------ Background pattern table address (0: $0000; 1: $1000)
+	// ||+------- Sprite size (0: 8x8 pixels; 1: 8x16 pixels)
+	// |+-------- PPU master/slave select
+	// |          (0: read backdrop from EXT pins; 1: output color on EXT pins)
+	// +--------- Generate an NMI at the start of the
+	//            vertical blanking interval (0: off; 1: on)
+	CR_NAMETABLE1              uint8 = 0b0000_0001
+	CR_NAMETABLE2              uint8 = 0b0000_0010
+	CR_VRAM_ADD_INCREMENT      uint8 = 0b0000_0100
+	CR_SPRITE_PATTERN_ADDR     uint8 = 0b0000_1000
+	CR_BACKGROUND_PATTERN_ADDR uint8 = 0b0001_0000
+	CR_SPRITE_SIZE             uint8 = 0b0010_0000
+	CR_MASTER_SLAVE_SELECT     uint8 = 0b0100_0000
+	CR_GENERATE_NMI            uint8 = 0b1000_0000
+)
+
 type ControlRegister struct {
 	Bits uint8
 }
@@ -209,4 +218,70 @@ func (c *ControlRegister) VRAMAddrIncrement() uint8 {
 
 func (c *ControlRegister) Update(data uint8) {
 	c.Bits = data
+}
+
+const (
+	// Status Register
+	// 7  bit  0
+	// ---- ----
+	// VSO. ....
+	// |||| ||||
+	// |||+-++++- Least significant bits previously written into a PPU register
+	// |||        (due to register not being updated for this address)
+	// ||+------- Sprite overflow. The intent was for this flag to be set
+	// ||         whenever more than eight sprites appear on a scanline, but a
+	// ||         hardware bug causes the actual behavior to be more complicated
+	// ||         and generate false positives as well as false negatives; see
+	// ||         PPU sprite evaluation. This flag is set during sprite
+	// ||         evaluation and cleared at dot 1 (the second dot) of the
+	// ||         pre-render line.
+	// |+-------- Sprite 0 Hit.  Set when a nonzero pixel of sprite 0 overlaps
+	// |          a nonzero background pixel; cleared at dot 1 of the pre-render
+	// |          line.  Used for raster timing.
+	// +--------- Vertical blank has started (0: not in vblank; 1: in vblank).
+	//            Set at dot 1 of line 241 (the line *after* the post-render
+	//            line); cleared after reading $2002 and at dot 1 of the
+	//            pre-render line.
+	S_NOTUSED         uint8 = 0b0000_0001
+	S_NOTUSED2        uint8 = 0b0000_0010
+	S_NOTUSED3        uint8 = 0b0000_0100
+	S_NOTUSED4        uint8 = 0b0000_1000
+	S_NOTUSED5        uint8 = 0b0001_0000
+	S_SPRITE_OVERFLOW uint8 = 0b0010_0000
+	S_SPRITE_ZERO_HIT uint8 = 0b0100_0000
+	S_VBLANK_STARTED  uint8 = 0b1000_0000
+)
+
+type Status struct {
+	Bits uint8
+}
+
+func NewStatus() *Status {
+	return &Status{
+		Bits: 0,
+	}
+}
+
+func (s *Status) SetVblankStatus(status bool) {
+	if status {
+		s.Bits = s.Bits | S_VBLANK_STARTED
+	} else {
+		s.Bits = s.Bits &^ S_VBLANK_STARTED
+	}
+}
+
+func (s *Status) SetSpriteZeroHitStatus(status bool) {
+	if status {
+		s.Bits = s.Bits | S_SPRITE_ZERO_HIT
+	} else {
+		s.Bits = s.Bits &^ S_SPRITE_ZERO_HIT
+	}
+}
+
+func (s *Status) SetSpriteOverflowStatus(status bool) {
+	if status {
+		s.Bits = s.Bits | S_SPRITE_OVERFLOW
+	} else {
+		s.Bits = s.Bits &^ S_SPRITE_OVERFLOW
+	}
 }
