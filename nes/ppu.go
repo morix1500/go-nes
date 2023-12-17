@@ -13,7 +13,13 @@ type PPU struct {
 	Status             StatusRegister
 	OAMAddress         uint8
 	OAMData            [256]uint8
-	Addr               AddrRegister
+
+	// PPU internal registers
+	v uint16 // current vram address
+	t uint16 // temporary vram address
+	x uint8  // fine x scroll
+	w bool   // write toggle
+	f bool   // even/odd frame flag
 }
 
 func NewPPU(characterRom []uint8, mirroring Mirroring) *PPU {
@@ -23,15 +29,22 @@ func NewPPU(characterRom []uint8, mirroring Mirroring) *PPU {
 		VRAM:         [2048]uint8{},
 		OAMData:      [256]uint8{},
 		Mirroring:    mirroring,
-		Addr:         *NewAddrRegister(),
 		Ctrl:         *NewControlRegister(),
 		Status:       *NewStatusRegister(),
 		Mask:         *NewMaskRegister(),
+		w:            false,
 	}
 }
 
 func (p *PPU) WriteToPPUAddr(value uint8) {
-	p.Addr.Update(value)
+	if p.w {
+		p.t = (p.t & 0xff00) | (uint16(value))
+		p.v = p.t
+		p.w = false
+	} else {
+		p.t = (p.t & 0x00ff) | ((uint16(value) & 0x3f) << 8)
+		p.w = true
+	}
 }
 
 func (p *PPU) WriteToPPUCTRL(value uint8) {
@@ -58,13 +71,9 @@ func (p *PPU) ReadOAMData() uint8 {
 	return p.OAMData[p.OAMAddress]
 }
 
-func (p *PPU) incrementVRAMAddr() {
-	p.Addr.Increment(p.Ctrl.VRAMAddrIncrement())
-}
-
 func (p *PPU) ReadData() uint8 {
-	addr := p.Addr.Get()
-	p.incrementVRAMAddr()
+	addr := p.v
+	p.v += uint16(p.Ctrl.VRAMAddrIncrement())
 
 	var result uint8
 
@@ -85,7 +94,7 @@ func (p *PPU) ReadData() uint8 {
 }
 
 func (p *PPU) WriteData(value uint8) {
-	addr := p.Addr.Get()
+	addr := p.v
 
 	if addr <= 0x1fff {
 		panic(fmt.Sprintf("attempt to write to character rom space: %d", addr))
@@ -102,7 +111,7 @@ func (p *PPU) WriteData(value uint8) {
 		panic(fmt.Sprintf("unexpected access to mirrored space %d", addr))
 	}
 
-	p.incrementVRAMAddr()
+	p.v += uint16(p.Ctrl.VRAMAddrIncrement())
 }
 
 // Horizontal:
@@ -138,59 +147,8 @@ func (p *PPU) mirrorVRAMAddr(addr uint16) uint16 {
 func (p *PPU) ReadStatus() uint8 {
 	result := p.Status.Bits
 	p.Status.SetVblankStatus(false)
-	p.Addr.ResetLatch()
+	p.w = false
 	return result
-}
-
-type AddrRegister struct {
-	High  uint8
-	Low   uint8
-	HiPrt bool
-}
-
-func NewAddrRegister() *AddrRegister {
-	return &AddrRegister{
-		High:  0,
-		Low:   0,
-		HiPrt: true,
-	}
-}
-
-func (a *AddrRegister) set(data uint16) {
-	a.High = uint8(data >> 8)
-	a.Low = uint8(data & 0xff)
-}
-
-func (a *AddrRegister) Update(data uint8) {
-	if a.HiPrt {
-		a.High = data
-	} else {
-		a.Low = data
-	}
-	// mirror down addr above 0x3fff
-	if a.Get() > 0x3fff {
-		a.set(a.Get() & 0x3fff)
-	}
-	a.HiPrt = !a.HiPrt
-}
-
-func (a *AddrRegister) Increment(inc uint8) {
-	lo := a.Low
-	a.Low = a.Low + inc
-	if lo > a.Low {
-		a.High++
-	}
-	if a.Get() > 0x3fff {
-		a.set(a.Get() & 0x3fff) // mirror down addr above 0x3fff
-	}
-}
-
-func (a *AddrRegister) ResetLatch() {
-	a.HiPrt = true
-}
-
-func (a *AddrRegister) Get() uint16 {
-	return uint16(a.High)<<8 | uint16(a.Low)
 }
 
 const (

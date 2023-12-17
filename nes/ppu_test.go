@@ -24,7 +24,7 @@ func TestPPUVramReads(t *testing.T) {
 	ppu.WriteToPPUAddr(0x05)
 
 	ppu.ReadData()
-	assert.Equal(t, uint16(0x2306), ppu.Addr.Get())
+	assert.Equal(t, uint16(0x2306), ppu.v)
 	assert.Equal(t, uint8(0x66), ppu.ReadData())
 }
 
