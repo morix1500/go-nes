@@ -6,14 +6,14 @@ type PPU struct {
 	CharacterRom       []uint8
 	PaletteTable       [32]uint8
 	VRAM               [2048]uint8
-	OAMData            [256]uint8
 	InternalDataBuffer uint8
 	Mirroring          Mirroring
 	Ctrl               ControlRegister
-	Addr               AddrRegister
-	Status             StatusRegister
 	Mask               MaskRegister
+	Status             StatusRegister
 	OAMAddress         uint8
+	OAMData            [256]uint8
+	Addr               AddrRegister
 }
 
 func NewPPU(characterRom []uint8, mirroring Mirroring) *PPU {
@@ -45,6 +45,13 @@ func (p *PPU) WriteToOAMAddr(value uint8) {
 func (p *PPU) WriteToOAMData(value uint8) {
 	p.OAMData[p.OAMAddress] = value
 	p.OAMAddress++
+}
+
+func (p *PPU) WriteOAMDMA(data []uint8) {
+	for i := 0; i < len(data); i++ {
+		p.OAMData[p.OAMAddress] = data[i]
+		p.OAMAddress++
+	}
 }
 
 func (p *PPU) ReadOAMData() uint8 {

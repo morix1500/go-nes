@@ -171,3 +171,26 @@ func TestOAMReadWrite(t *testing.T) {
 	ppu.WriteToOAMAddr(0x11)
 	assert.Equal(t, uint8(0x77), ppu.ReadOAMData())
 }
+
+func TestOAMDMA(t *testing.T) {
+	ppu := NewPPU(nil, MIRROR_HORIZONTAL)
+
+	data := [256]uint8{}
+	for i := 0; i < 256; i++ {
+		data[i] = uint8(0x66)
+	}
+	data[0] = 0x77
+	data[255] = 0x88
+
+	ppu.WriteToOAMAddr(0x10)
+	ppu.WriteOAMDMA(data[:])
+
+	ppu.WriteToOAMAddr(0xf)
+	assert.Equal(t, uint8(0x88), ppu.ReadOAMData())
+
+	ppu.WriteToOAMAddr(0x10)
+	assert.Equal(t, uint8(0x77), ppu.ReadOAMData())
+
+	ppu.WriteToOAMAddr(0x11)
+	assert.Equal(t, uint8(0x66), ppu.ReadOAMData())
+}
