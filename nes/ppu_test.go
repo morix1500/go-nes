@@ -159,3 +159,15 @@ func TestReadStatusResetsVblank(t *testing.T) {
 	assert.Equal(t, uint8(1), status>>7)
 	assert.Equal(t, uint8(0), ppu.Status.Bits>>7)
 }
+
+func TestOAMReadWrite(t *testing.T) {
+	ppu := NewPPU(nil, MIRROR_HORIZONTAL)
+	ppu.WriteToOAMAddr(0x10)
+	ppu.WriteToOAMData(0x66)
+	ppu.WriteToOAMData(0x77)
+
+	ppu.WriteToOAMAddr(0x10)
+	assert.Equal(t, uint8(0x66), ppu.ReadOAMData())
+	ppu.WriteToOAMAddr(0x11)
+	assert.Equal(t, uint8(0x77), ppu.ReadOAMData())
+}

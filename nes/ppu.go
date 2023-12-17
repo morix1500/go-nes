@@ -13,6 +13,7 @@ type PPU struct {
 	Addr               AddrRegister
 	Status             StatusRegister
 	Mask               MaskRegister
+	OAMAddress         uint8
 }
 
 func NewPPU(characterRom []uint8, mirroring Mirroring) *PPU {
@@ -35,6 +36,19 @@ func (p *PPU) WriteToPPUAddr(value uint8) {
 
 func (p *PPU) WriteToPPUCTRL(value uint8) {
 	p.Ctrl.Update(value)
+}
+
+func (p *PPU) WriteToOAMAddr(value uint8) {
+	p.OAMAddress = value
+}
+
+func (p *PPU) WriteToOAMData(value uint8) {
+	p.OAMData[p.OAMAddress] = value
+	p.OAMAddress++
+}
+
+func (p *PPU) ReadOAMData() uint8 {
+	return p.OAMData[p.OAMAddress]
 }
 
 func (p *PPU) incrementVRAMAddr() {
