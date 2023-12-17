@@ -11,7 +11,7 @@ type PPU struct {
 	Mirroring          Mirroring
 	Addr               AddrRegister
 	Ctrl               ControlRegister
-	Status             Status
+	Status             StatusRegister
 }
 
 func NewPPU(characterRom []uint8, mirroring Mirroring) *PPU {
@@ -23,7 +23,7 @@ func NewPPU(characterRom []uint8, mirroring Mirroring) *PPU {
 		Mirroring:    mirroring,
 		Addr:         *NewAddrRegister(),
 		Ctrl:         *NewControlRegister(),
-		Status:       *NewStatus(),
+		Status:       *NewStatusRegister(),
 	}
 }
 
@@ -252,17 +252,17 @@ const (
 	S_VBLANK_STARTED  uint8 = 0b1000_0000
 )
 
-type Status struct {
+type StatusRegister struct {
 	Bits uint8
 }
 
-func NewStatus() *Status {
-	return &Status{
+func NewStatusRegister() *StatusRegister {
+	return &StatusRegister{
 		Bits: 0,
 	}
 }
 
-func (s *Status) SetVblankStatus(status bool) {
+func (s *StatusRegister) SetVblankStatus(status bool) {
 	if status {
 		s.Bits = s.Bits | S_VBLANK_STARTED
 	} else {
@@ -270,7 +270,7 @@ func (s *Status) SetVblankStatus(status bool) {
 	}
 }
 
-func (s *Status) SetSpriteZeroHitStatus(status bool) {
+func (s *StatusRegister) SetSpriteZeroHitStatus(status bool) {
 	if status {
 		s.Bits = s.Bits | S_SPRITE_ZERO_HIT
 	} else {
@@ -278,7 +278,7 @@ func (s *Status) SetSpriteZeroHitStatus(status bool) {
 	}
 }
 
-func (s *Status) SetSpriteOverflowStatus(status bool) {
+func (s *StatusRegister) SetSpriteOverflowStatus(status bool) {
 	if status {
 		s.Bits = s.Bits | S_SPRITE_OVERFLOW
 	} else {
