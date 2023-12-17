@@ -9,8 +9,8 @@ type PPU struct {
 	OAMData            [256]uint8
 	InternalDataBuffer uint8
 	Mirroring          Mirroring
-	Addr               AddrRegister
 	Ctrl               ControlRegister
+	Addr               AddrRegister
 	Status             StatusRegister
 }
 

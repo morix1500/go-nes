@@ -137,3 +137,25 @@ func TestReadStatusResetsLatch(t *testing.T) {
 	ppu.ReadData()
 	assert.Equal(t, uint8(0x66), ppu.ReadData())
 }
+
+func TestPPUVramMirroring(t *testing.T) {
+	ppu := NewPPU(nil, MIRROR_HORIZONTAL)
+	ppu.WriteToPPUCTRL(0)
+	ppu.VRAM[0x0305] = 0x66
+
+	ppu.WriteToPPUAddr(0x63) // 0x6305 -> 0x2305
+	ppu.WriteToPPUAddr(0x05)
+
+	ppu.ReadData()
+	assert.Equal(t, uint8(0x66), ppu.ReadData())
+}
+
+func TestReadStatusResetsVblank(t *testing.T) {
+	ppu := NewPPU(nil, MIRROR_HORIZONTAL)
+	ppu.Status.SetVblankStatus(true)
+
+	status := ppu.ReadStatus()
+
+	assert.Equal(t, uint8(1), status>>7)
+	assert.Equal(t, uint8(0), ppu.Status.Bits>>7)
+}
