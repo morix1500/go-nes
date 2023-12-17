@@ -12,6 +12,7 @@ type PPU struct {
 	Ctrl               ControlRegister
 	Addr               AddrRegister
 	Status             StatusRegister
+	Mask               MaskRegister
 }
 
 func NewPPU(characterRom []uint8, mirroring Mirroring) *PPU {
@@ -24,6 +25,7 @@ func NewPPU(characterRom []uint8, mirroring Mirroring) *PPU {
 		Addr:         *NewAddrRegister(),
 		Ctrl:         *NewControlRegister(),
 		Status:       *NewStatusRegister(),
+		Mask:         *NewMaskRegister(),
 	}
 }
 
@@ -284,4 +286,41 @@ func (s *StatusRegister) SetSpriteOverflowStatus(status bool) {
 	} else {
 		s.Bits = s.Bits &^ S_SPRITE_OVERFLOW
 	}
+}
+
+const (
+	// 7  bit  0
+	// ---- ----
+	// BGRs bMmG
+	// |||| ||||
+	// |||| |||+- Greyscale (0: normal color, 1: produce a greyscale display)
+	// |||| ||+-- 1: Show background in leftmost 8 pixels of screen, 0: Hide
+	// |||| |+--- 1: Show sprites in leftmost 8 pixels of screen, 0: Hide
+	// |||| +---- 1: Show background
+	// |||+------ 1: Show sprites
+	// ||+------- Emphasize red (green on PAL/Dendy)
+	// |+-------- Emphasize green (red on PAL/Dendy)
+	// +--------- Emphasize blue
+	MASK_GREY_SCALE               uint8 = 0b0000_0001
+	MASK_LEFTMOST_8PXL_BACKGROUND uint8 = 0b0000_0010
+	MASK_LEFTMOST_8PXL_SPRITE     uint8 = 0b0000_0100
+	MASK_SHOW_BACKGROUND          uint8 = 0b0000_1000
+	MASK_SHOW_SPRITES             uint8 = 0b0001_0000
+	MASK_ENPHASIZE_RED            uint8 = 0b0010_0000
+	MASK_ENPHASIZE_GREEN          uint8 = 0b0100_0000
+	MASK_EMPHASIZE_BLUE           uint8 = 0b1000_0000
+)
+
+type MaskRegister struct {
+	Bits uint8
+}
+
+func NewMaskRegister() *MaskRegister {
+	return &MaskRegister{
+		Bits: 0,
+	}
+}
+
+func (m *MaskRegister) Update(data uint8) {
+	m.Bits = data
 }
