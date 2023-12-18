@@ -772,6 +772,9 @@ func (c *CPU) Run() {
 		case "*SRE":
 			c.sre(opsInfo.Mode)
 		}
+
+		c.bus.Tick(opsInfo.Cycles)
+
 		if programCounterState == c.programCounter {
 			c.programCounter += uint16(opsInfo.Length - 1)
 		}

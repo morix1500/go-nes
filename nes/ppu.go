@@ -10,6 +10,8 @@ type PPU struct {
 	VRAM               [2048]uint8
 	InternalDataBuffer uint8
 	Mirroring          Mirroring
+	Scanline           uint16
+	Cycles             uint
 
 	// PPU internal registers
 	v uint16 // current vram address(15bit)
@@ -228,4 +230,24 @@ func (p *PPU) ReadStatus() uint8 {
 	p.flagVblankStarted = 0
 	p.w = 0
 	return result
+}
+
+func (p *PPU) Tick(cycles uint8) bool {
+	p.Cycles += uint(cycles)
+	if p.Cycles >= 341 {
+		p.Cycles -= 341
+		p.Scanline++
+		if p.Scanline == 241 {
+			if p.flagNMI {
+				p.flagVblankStarted = 1
+			}
+		}
+
+		if p.Scanline >= 262 {
+			p.Scanline = 0
+			p.flagVblankStarted = 0
+			return true
+		}
+	}
+	return false
 }

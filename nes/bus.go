@@ -34,6 +34,7 @@ type Bus struct {
 	CpuVRAM   [2048]uint8
 	Cartridge *Cartridge
 	PPU       *PPU
+	Cycles    uint
 }
 
 const (
@@ -115,4 +116,9 @@ func (b *Bus) ReadProgramRom(addr uint16) uint8 {
 		addr = addr % 0x4000
 	}
 	return b.Cartridge.ProgramRom[addr]
+}
+
+func (b *Bus) Tick(cycles uint8) {
+	b.Cycles += uint(cycles)
+	b.PPU.Tick(cycles * 3)
 }
