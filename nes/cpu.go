@@ -42,6 +42,7 @@ type CPU struct {
 	programCounter uint16
 	stackPointer   uint8
 	bus            *Bus
+	cycle          uint8
 }
 
 func NewCPU(bus *Bus) *CPU {
@@ -53,46 +54,47 @@ func NewCPU(bus *Bus) *CPU {
 		programCounter: 0,
 		stackPointer:   0xfd,
 		bus:            bus,
+		cycle:          0,
 	}
 }
 
-func (c *CPU) lda(mode AddressingMode) {
-	addr := c.getOperandAddress(mode)
+func (c *CPU) lda(opsInfo OpeCode) {
+	addr := c.getOperandAddress(opsInfo)
 	value := c.readMemory(addr)
 	c.setRegisterA(value)
 }
 
-func (c *CPU) ldx(mode AddressingMode) {
-	addr := c.getOperandAddress(mode)
+func (c *CPU) ldx(opsInfo OpeCode) {
+	addr := c.getOperandAddress(opsInfo)
 	value := c.readMemory(addr)
 	c.registerX = value
 	c.updateZeroAndNegativeFlags(c.registerX)
 }
 
-func (c *CPU) ldy(mode AddressingMode) {
-	addr := c.getOperandAddress(mode)
+func (c *CPU) ldy(opsInfo OpeCode) {
+	addr := c.getOperandAddress(opsInfo)
 	value := c.readMemory(addr)
 	c.registerY = value
 	c.updateZeroAndNegativeFlags(c.registerY)
 }
 
-func (c *CPU) sta(mode AddressingMode) {
-	addr := c.getOperandAddress(mode)
+func (c *CPU) sta(opsInfo OpeCode) {
+	addr := c.getOperandAddress(opsInfo)
 	c.writeMemory(addr, c.registerA)
 }
 
-func (c *CPU) stx(mode AddressingMode) {
-	addr := c.getOperandAddress(mode)
+func (c *CPU) stx(opsInfo OpeCode) {
+	addr := c.getOperandAddress(opsInfo)
 	c.writeMemory(addr, c.registerX)
 }
 
-func (c *CPU) sty(mode AddressingMode) {
-	addr := c.getOperandAddress(mode)
+func (c *CPU) sty(opsInfo OpeCode) {
+	addr := c.getOperandAddress(opsInfo)
 	c.writeMemory(addr, c.registerY)
 }
 
-func (cpu *CPU) adc(mode AddressingMode) {
-	addr := cpu.getOperandAddress(mode)
+func (cpu *CPU) adc(opsInfo OpeCode) {
+	addr := cpu.getOperandAddress(opsInfo)
 	a := cpu.registerA
 	b := cpu.readMemory(addr)
 	c := cpu.status & CPU_FLAG_CARRY
@@ -113,13 +115,13 @@ func (cpu *CPU) adc(mode AddressingMode) {
 	}
 }
 
-func (c *CPU) and(mode AddressingMode) {
-	addr := c.getOperandAddress(mode)
+func (c *CPU) and(opsInfo OpeCode) {
+	addr := c.getOperandAddress(opsInfo)
 	c.setRegisterA(c.registerA & c.readMemory(addr))
 }
 
-func (c *CPU) asl(mode AddressingMode) {
-	if mode == ACCUMULATOR {
+func (c *CPU) asl(opsInfo OpeCode) {
+	if opsInfo.Mode == ACCUMULATOR {
 		if c.registerA&0x80 != 0 {
 			c.status |= CPU_FLAG_CARRY
 		} else {
@@ -129,7 +131,7 @@ func (c *CPU) asl(mode AddressingMode) {
 		return
 	}
 
-	addr := c.getOperandAddress(mode)
+	addr := c.getOperandAddress(opsInfo)
 	value := c.readMemory(addr)
 	if value&0x80 != 0 {
 		c.status |= CPU_FLAG_CARRY
@@ -143,27 +145,30 @@ func (c *CPU) asl(mode AddressingMode) {
 
 func (c *CPU) bcc() {
 	if c.status&CPU_FLAG_CARRY == 0 {
-		addr := c.getOperandAddress(RELATIVE)
+		addr := c.getOperandAddress(CPU_OPS_CODES[0x90])
+		c.addBranchCycles(addr)
 		c.programCounter += addr + 1
 	}
 }
 
 func (c *CPU) bcs() {
 	if c.status&CPU_FLAG_CARRY != 0 {
-		addr := c.getOperandAddress(RELATIVE)
+		addr := c.getOperandAddress(CPU_OPS_CODES[0xb0])
+		c.addBranchCycles(addr)
 		c.programCounter += addr + 1
 	}
 }
 
 func (c *CPU) beq() {
 	if c.status&CPU_FLAG_ZERO != 0 {
-		addr := c.getOperandAddress(RELATIVE)
+		addr := c.getOperandAddress(CPU_OPS_CODES[0xf0])
+		c.addBranchCycles(addr)
 		c.programCounter += addr + 1
 	}
 }
 
-func (c *CPU) bit(mode AddressingMode) {
-	addr := c.getOperandAddress(mode)
+func (c *CPU) bit(opsInfo OpeCode) {
+	addr := c.getOperandAddress(opsInfo)
 	value := c.readMemory(addr)
 	if value&c.registerA == 0 {
 		c.status |= CPU_FLAG_ZERO
@@ -186,35 +191,40 @@ func (c *CPU) bit(mode AddressingMode) {
 
 func (c *CPU) bmi() {
 	if c.status&CPU_FLAG_NEGATIVE != 0 {
-		addr := c.getOperandAddress(RELATIVE)
+		addr := c.getOperandAddress(CPU_OPS_CODES[0x30])
+		c.addBranchCycles(addr)
 		c.programCounter += addr + 1
 	}
 }
 
 func (c *CPU) bne() {
 	if c.status&CPU_FLAG_ZERO == 0 {
-		addr := c.getOperandAddress(RELATIVE)
+		addr := c.getOperandAddress(CPU_OPS_CODES[0xd0])
+		c.addBranchCycles(addr)
 		c.programCounter += addr + 1
 	}
 }
 
 func (c *CPU) bpl() {
 	if c.status&CPU_FLAG_NEGATIVE == 0 {
-		addr := c.getOperandAddress(RELATIVE)
+		addr := c.getOperandAddress(CPU_OPS_CODES[0x10])
+		c.addBranchCycles(addr)
 		c.programCounter += addr + 1
 	}
 }
 
 func (c *CPU) bvc() {
 	if c.status&CPU_FLAG_OVERFLOW == 0 {
-		addr := c.getOperandAddress(RELATIVE)
+		addr := c.getOperandAddress(CPU_OPS_CODES[0x50])
+		c.addBranchCycles(addr)
 		c.programCounter += addr + 1
 	}
 }
 
 func (c *CPU) bvs() {
 	if c.status&CPU_FLAG_OVERFLOW != 0 {
-		addr := c.getOperandAddress(RELATIVE)
+		addr := c.getOperandAddress(CPU_OPS_CODES[0x70])
+		c.addBranchCycles(addr)
 		c.programCounter += addr + 1
 	}
 }
@@ -235,8 +245,8 @@ func (c *CPU) clv() {
 	c.status &= ^CPU_FLAG_OVERFLOW
 }
 
-func (c *CPU) cmp(mode AddressingMode) {
-	addr := c.getOperandAddress(mode)
+func (c *CPU) cmp(opsInfo OpeCode) {
+	addr := c.getOperandAddress(opsInfo)
 	value := c.readMemory(addr)
 	if c.registerA >= value {
 		c.status |= CPU_FLAG_CARRY
@@ -247,8 +257,8 @@ func (c *CPU) cmp(mode AddressingMode) {
 	c.updateZeroAndNegativeFlags(c.registerA - value)
 }
 
-func (c *CPU) cpx(mode AddressingMode) {
-	addr := c.getOperandAddress(mode)
+func (c *CPU) cpx(opsInfo OpeCode) {
+	addr := c.getOperandAddress(opsInfo)
 	value := c.readMemory(addr)
 	if c.registerX >= value {
 		c.status |= CPU_FLAG_CARRY
@@ -259,8 +269,8 @@ func (c *CPU) cpx(mode AddressingMode) {
 	c.updateZeroAndNegativeFlags(c.registerX - value)
 }
 
-func (c *CPU) cpy(mode AddressingMode) {
-	addr := c.getOperandAddress(mode)
+func (c *CPU) cpy(opsInfo OpeCode) {
+	addr := c.getOperandAddress(opsInfo)
 	value := c.readMemory(addr)
 	if c.registerY >= value {
 		c.status |= CPU_FLAG_CARRY
@@ -271,8 +281,8 @@ func (c *CPU) cpy(mode AddressingMode) {
 	c.updateZeroAndNegativeFlags(c.registerY - value)
 }
 
-func (c *CPU) dec(mode AddressingMode) {
-	addr := c.getOperandAddress(mode)
+func (c *CPU) dec(opsInfo OpeCode) {
+	addr := c.getOperandAddress(opsInfo)
 	value := c.readMemory(addr)
 	value--
 	c.writeMemory(addr, value)
@@ -289,13 +299,13 @@ func (c *CPU) dey() {
 	c.updateZeroAndNegativeFlags(c.registerY)
 }
 
-func (c *CPU) eor(mode AddressingMode) {
-	addr := c.getOperandAddress(mode)
+func (c *CPU) eor(opsInfo OpeCode) {
+	addr := c.getOperandAddress(opsInfo)
 	c.setRegisterA(c.registerA ^ c.readMemory(addr))
 }
 
-func (c *CPU) inc(mode AddressingMode) {
-	addr := c.getOperandAddress(mode)
+func (c *CPU) inc(opsInfo OpeCode) {
+	addr := c.getOperandAddress(opsInfo)
 	value := c.readMemory(addr)
 	value++
 	c.writeMemory(addr, value)
@@ -312,10 +322,10 @@ func (c *CPU) iny() {
 	c.updateZeroAndNegativeFlags(c.registerY)
 }
 
-func (c *CPU) jmp(mode AddressingMode) {
-	addr := c.getOperandAddress(mode)
+func (c *CPU) jmp(opsInfo OpeCode) {
+	addr := c.getOperandAddress(opsInfo)
 
-	if mode == ABSOLUTE {
+	if opsInfo.Mode == ABSOLUTE {
 		c.programCounter = addr
 		return
 	}
@@ -338,14 +348,14 @@ func (c *CPU) jmp(mode AddressingMode) {
 }
 
 func (c *CPU) jsr() {
-	addr := c.getOperandAddress(ABSOLUTE)
+	addr := c.getOperandAddress(CPU_OPS_CODES[0x20])
 	// 2バイト加算している理由は、JSR命令の次の命令を実行するため
 	c.stackPush16(c.programCounter + 2 - 1)
 	c.programCounter = addr
 }
 
-func (c *CPU) lsr(mode AddressingMode) {
-	if mode == ACCUMULATOR {
+func (c *CPU) lsr(opsInfo OpeCode) {
+	if opsInfo.Mode == ACCUMULATOR {
 		if c.registerA&CPU_FLAG_CARRY != 0 {
 			c.status |= CPU_FLAG_CARRY
 		} else {
@@ -355,7 +365,7 @@ func (c *CPU) lsr(mode AddressingMode) {
 		return
 	}
 
-	addr := c.getOperandAddress(mode)
+	addr := c.getOperandAddress(opsInfo)
 	value := c.readMemory(addr)
 	if value&CPU_FLAG_CARRY != 0 {
 		c.status |= CPU_FLAG_CARRY
@@ -367,8 +377,8 @@ func (c *CPU) lsr(mode AddressingMode) {
 	c.updateZeroAndNegativeFlags(value)
 }
 
-func (c *CPU) ora(mode AddressingMode) {
-	addr := c.getOperandAddress(mode)
+func (c *CPU) ora(opsInfo OpeCode) {
+	addr := c.getOperandAddress(opsInfo)
 	c.setRegisterA(c.registerA | c.readMemory(addr))
 }
 
@@ -389,10 +399,10 @@ func (c *CPU) plp() {
 	c.status = c.stackPop()&^CPU_FLAG_BREAK | CPU_FLAG_BREAK2
 }
 
-func (c *CPU) rol(mode AddressingMode) {
+func (c *CPU) rol(opsInfo OpeCode) {
 	oldCarry := c.status & CPU_FLAG_CARRY
 
-	if mode == ACCUMULATOR {
+	if opsInfo.Mode == ACCUMULATOR {
 		if c.registerA&0x80 != 0 {
 			c.status |= CPU_FLAG_CARRY
 		} else {
@@ -402,7 +412,7 @@ func (c *CPU) rol(mode AddressingMode) {
 		return
 	}
 
-	addr := c.getOperandAddress(mode)
+	addr := c.getOperandAddress(opsInfo)
 	value := c.readMemory(addr)
 	if value&0x80 != 0 {
 		c.status |= CPU_FLAG_CARRY
@@ -415,11 +425,11 @@ func (c *CPU) rol(mode AddressingMode) {
 	c.updateZeroAndNegativeFlags(value)
 }
 
-func (c *CPU) ror(mode AddressingMode) {
+func (c *CPU) ror(opsInfo OpeCode) {
 	oldCarry := c.status & CPU_FLAG_CARRY
 	oldCarry <<= 7
 
-	if mode == ACCUMULATOR {
+	if opsInfo.Mode == ACCUMULATOR {
 		if c.registerA&CPU_FLAG_CARRY != 0 {
 			c.status |= CPU_FLAG_CARRY
 		} else {
@@ -430,7 +440,7 @@ func (c *CPU) ror(mode AddressingMode) {
 		return
 	}
 
-	addr := c.getOperandAddress(mode)
+	addr := c.getOperandAddress(opsInfo)
 	value := c.readMemory(addr)
 	if value&CPU_FLAG_CARRY != 0 {
 		c.status |= CPU_FLAG_CARRY
@@ -452,8 +462,8 @@ func (c *CPU) rts() {
 	c.programCounter = c.stackPop16() + 1
 }
 
-func (cpu *CPU) sbc(mode AddressingMode) {
-	addr := cpu.getOperandAddress(mode)
+func (cpu *CPU) sbc(opsInfo OpeCode) {
+	addr := cpu.getOperandAddress(opsInfo)
 	a := cpu.registerA
 	b := cpu.readMemory(addr)
 	c := cpu.status & CPU_FLAG_CARRY
@@ -514,44 +524,44 @@ func (c *CPU) tya() {
 	c.setRegisterA(c.registerY)
 }
 
-func (c *CPU) lax(mode AddressingMode) {
-	c.lda(mode)
+func (c *CPU) lax(opsInfo OpeCode) {
+	c.lda(opsInfo)
 	c.tax()
 }
 
-func (c *CPU) sax(mode AddressingMode) {
-	addr := c.getOperandAddress(mode)
+func (c *CPU) sax(opsInfo OpeCode) {
+	addr := c.getOperandAddress(opsInfo)
 	c.writeMemory(addr, c.registerA&c.registerX)
 }
 
-func (c *CPU) dcp(mode AddressingMode) {
-	c.dec(mode)
-	c.cmp(mode)
+func (c *CPU) dcp(opsInfo OpeCode) {
+	c.dec(opsInfo)
+	c.cmp(opsInfo)
 }
 
-func (c *CPU) isb(mode AddressingMode) {
-	c.inc(mode)
-	c.sbc(mode)
+func (c *CPU) isb(opsInfo OpeCode) {
+	c.inc(opsInfo)
+	c.sbc(opsInfo)
 }
 
-func (c *CPU) slo(mode AddressingMode) {
-	c.asl(mode)
-	c.ora(mode)
+func (c *CPU) slo(opsInfo OpeCode) {
+	c.asl(opsInfo)
+	c.ora(opsInfo)
 }
 
-func (c *CPU) rla(mode AddressingMode) {
-	c.rol(mode)
-	c.and(mode)
+func (c *CPU) rla(opsInfo OpeCode) {
+	c.rol(opsInfo)
+	c.and(opsInfo)
 }
 
-func (c *CPU) sre(mode AddressingMode) {
-	c.lsr(mode)
-	c.eor(mode)
+func (c *CPU) sre(opsInfo OpeCode) {
+	c.lsr(opsInfo)
+	c.eor(opsInfo)
 }
 
-func (c *CPU) rra(mode AddressingMode) {
-	c.ror(mode)
-	c.adc(mode)
+func (c *CPU) rra(opsInfo OpeCode) {
+	c.ror(opsInfo)
+	c.adc(opsInfo)
 }
 
 func (c *CPU) updateZeroAndNegativeFlags(result uint8) {
@@ -642,15 +652,17 @@ func (c *CPU) Run() {
 			panic(fmt.Sprintf("unknown code: %d", code))
 		}
 
+		c.cycle = opsInfo.Cycles
+
 		switch opsInfo.Mnemonic {
 		case "BRK":
 			return
 		case "ADC":
-			c.adc(opsInfo.Mode)
+			c.adc(opsInfo)
 		case "AND":
-			c.and(opsInfo.Mode)
+			c.and(opsInfo)
 		case "ASL":
-			c.asl(opsInfo.Mode)
+			c.asl(opsInfo)
 		case "BCC":
 			c.bcc()
 		case "BCS":
@@ -658,7 +670,7 @@ func (c *CPU) Run() {
 		case "BEQ":
 			c.beq()
 		case "BIT":
-			c.bit(opsInfo.Mode)
+			c.bit(opsInfo)
 		case "BMI":
 			c.bmi()
 		case "BNE":
@@ -678,41 +690,41 @@ func (c *CPU) Run() {
 		case "CLV":
 			c.clv()
 		case "CMP":
-			c.cmp(opsInfo.Mode)
+			c.cmp(opsInfo)
 		case "CPX":
-			c.cpx(opsInfo.Mode)
+			c.cpx(opsInfo)
 		case "CPY":
-			c.cpy(opsInfo.Mode)
+			c.cpy(opsInfo)
 		case "DEC":
-			c.dec(opsInfo.Mode)
+			c.dec(opsInfo)
 		case "DEX":
 			c.dex()
 		case "DEY":
 			c.dey()
 		case "EOR":
-			c.eor(opsInfo.Mode)
+			c.eor(opsInfo)
 		case "INC":
-			c.inc(opsInfo.Mode)
+			c.inc(opsInfo)
 		case "INX":
 			c.inx()
 		case "INY":
 			c.iny()
 		case "JMP":
-			c.jmp(opsInfo.Mode)
+			c.jmp(opsInfo)
 		case "JSR":
 			c.jsr()
 		case "LDA":
-			c.lda(opsInfo.Mode)
+			c.lda(opsInfo)
 		case "LDX":
-			c.ldx(opsInfo.Mode)
+			c.ldx(opsInfo)
 		case "LDY":
-			c.ldy(opsInfo.Mode)
+			c.ldy(opsInfo)
 		case "LSR":
-			c.lsr(opsInfo.Mode)
+			c.lsr(opsInfo)
 		case "NOP", "*NOP":
 			// 何もしない
 		case "ORA":
-			c.ora(opsInfo.Mode)
+			c.ora(opsInfo)
 		case "PHA":
 			c.pha()
 		case "PHP":
@@ -722,15 +734,15 @@ func (c *CPU) Run() {
 		case "PLP":
 			c.plp()
 		case "ROL":
-			c.rol(opsInfo.Mode)
+			c.rol(opsInfo)
 		case "ROR":
-			c.ror(opsInfo.Mode)
+			c.ror(opsInfo)
 		case "RTI":
 			c.rti()
 		case "RTS":
 			c.rts()
 		case "SBC", "*SBC":
-			c.sbc(opsInfo.Mode)
+			c.sbc(opsInfo)
 		case "SEC":
 			c.sec()
 		case "SED":
@@ -738,11 +750,11 @@ func (c *CPU) Run() {
 		case "SEI":
 			c.sei()
 		case "STA":
-			c.sta(opsInfo.Mode)
+			c.sta(opsInfo)
 		case "STX":
-			c.stx(opsInfo.Mode)
+			c.stx(opsInfo)
 		case "STY":
-			c.sty(opsInfo.Mode)
+			c.sty(opsInfo)
 		case "TAX":
 			c.tax()
 		case "TAY":
@@ -756,24 +768,24 @@ func (c *CPU) Run() {
 		case "TYA":
 			c.tya()
 		case "*LAX":
-			c.lax(opsInfo.Mode)
+			c.lax(opsInfo)
 		case "*SAX":
-			c.sax(opsInfo.Mode)
+			c.sax(opsInfo)
 		case "*DCP":
-			c.dcp(opsInfo.Mode)
+			c.dcp(opsInfo)
 		case "*ISB":
-			c.isb(opsInfo.Mode)
+			c.isb(opsInfo)
 		case "*SLO":
-			c.slo(opsInfo.Mode)
+			c.slo(opsInfo)
 		case "*RLA":
-			c.rla(opsInfo.Mode)
+			c.rla(opsInfo)
 		case "*RRA":
-			c.rra(opsInfo.Mode)
+			c.rra(opsInfo)
 		case "*SRE":
-			c.sre(opsInfo.Mode)
+			c.sre(opsInfo)
 		}
 
-		c.bus.Tick(opsInfo.Cycles)
+		c.bus.Tick(c.cycle)
 
 		if programCounterState == c.programCounter {
 			c.programCounter += uint16(opsInfo.Length - 1)
@@ -781,35 +793,44 @@ func (c *CPU) Run() {
 	}
 }
 
-func (c *CPU) getOperandAddress(mode AddressingMode) uint16 {
-	return c.getAbsoluteAddress(mode, c.programCounter)
+func (c *CPU) getOperandAddress(opsInfo OpeCode) uint16 {
+	return c.getAbsoluteAddress(opsInfo, c.programCounter)
 }
 
-func (c *CPU) getAbsoluteAddress(mode AddressingMode, addr uint16) uint16 {
-	switch mode {
+func (c *CPU) getAbsoluteAddress(opsInfo OpeCode, addr uint16) uint16 {
+	var result uint16
+	pageCrossed := false
+
+	switch opsInfo.Mode {
 	case IMMEDIATE:
-		return addr
+		result = addr
 	case ZERO_PAGE:
-		return uint16(c.readMemory(addr))
+		result = uint16(c.readMemory(addr))
 	case ZERO_PAGE_X:
-		return uint16(c.readMemory(addr) + c.registerX)
+		result = uint16(c.readMemory(addr) + c.registerX)
 	case ZERO_PAGE_Y:
-		return uint16(c.readMemory(addr) + c.registerY)
+		result = uint16(c.readMemory(addr) + c.registerY)
 	case ABSOLUTE:
-		return c.readMemory16(addr)
+		result = c.readMemory16(addr)
 	case ABSOLUTE_X:
-		return c.readMemory16(addr) + uint16(c.registerX)
+		address := c.readMemory16(addr)
+
+		pageCrossed = PageDiffer(address-uint16(c.registerX), address)
+		result = c.readMemory16(addr) + uint16(c.registerX)
 	case ABSOLUTE_Y:
-		return c.readMemory16(addr) + uint16(c.registerY)
+		address := c.readMemory16(addr)
+
+		pageCrossed = PageDiffer(address-uint16(c.registerY), address)
+		result = c.readMemory16(addr) + uint16(c.registerY)
 	case INDIRECT:
-		return c.readMemory16(addr)
+		result = c.readMemory16(addr)
 	case INDIRECT_X:
 		base := c.readMemory16(addr)
 		ptr := uint8(base + uint16(c.registerX))
 		lo := c.readMemory(uint16(ptr))
 		hi := c.readMemory(uint16(ptr + 1))
 
-		return uint16(hi)<<8 | uint16(lo)
+		result = uint16(hi)<<8 | uint16(lo)
 	case INDIRECT_Y:
 		base := c.readMemory(addr)
 		lo := c.readMemory(uint16(base))
@@ -817,19 +838,37 @@ func (c *CPU) getAbsoluteAddress(mode AddressingMode, addr uint16) uint16 {
 		derefBase := uint16(hi)<<8 | uint16(lo)
 		deref := derefBase + uint16(c.registerY)
 
-		return deref
+		pageCrossed = PageDiffer(deref-uint16(c.registerY), deref)
+		result = deref
 	case ACCUMULATOR:
-		return 0
+		result = 0
 	case RELATIVE:
 		// オペランドは符号付き8ビットのオフセットとして解釈される
 		address := uint16(c.readMemory(addr))
 		if address > 0x7f {
 			address = uint16(address) - uint16(0x100)
 		}
-		return address
+		result = address
 	case IMPLIED:
-		return 0
+		result = 0
 	default:
-		panic(fmt.Sprintf("unknown addressing mode: %d", mode))
+		panic(fmt.Sprintf("unknown addressing mode: %d", opsInfo.Mode))
+	}
+
+	if pageCrossed && opsInfo.AddCycleIfPageCrossed {
+		c.cycle++
+	}
+
+	return result
+}
+
+func PageDiffer(a, b uint16) bool {
+	return a&0xff00 != b&0xff00
+}
+
+func (c *CPU) addBranchCycles(address uint16) {
+	c.cycle++
+	if PageDiffer(c.programCounter, address) {
+		c.cycle++
 	}
 }
