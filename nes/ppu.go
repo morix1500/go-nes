@@ -1,6 +1,8 @@
 package nes
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type PPU struct {
 	CharacterRom       []uint8
@@ -8,7 +10,6 @@ type PPU struct {
 	VRAM               [2048]uint8
 	InternalDataBuffer uint8
 	Mirroring          Mirroring
-	Mask               MaskRegister
 	OAMAddress         uint8
 	OAMData            [256]uint8
 
@@ -28,6 +29,16 @@ type PPU struct {
 	flagMasterSlave     uint8 // 0: read EXT; 1: write EXT
 	flagNMI             bool  // 0: off; 1: on
 
+	// $2001 PPUMASK
+	flagGrayscale                 uint8 // 0: normal color; 1: grayscale
+	flagShowBackgroundLeftMost8px uint8 // 0: hide; 1: show
+	flagShowSpriteLeftMost8px     uint8 // 0: hide; 1: show
+	flagShowBackground            uint8 // 0: hide; 1: show
+	flagShowSprite                uint8 // 0: hide; 1: show
+	flagEmphasizeRed              uint8 // 1: emphasize
+	flagEmphasizeGreen            uint8 // 1: emphasize
+	flagEmphasizeBlue             uint8 // 1: emphasize
+
 	// $2002 PPUSTATUS
 	flagSpriteOverflow uint8
 	flagSpriteZeroHit  uint8
@@ -41,7 +52,6 @@ func NewPPU(characterRom []uint8, mirroring Mirroring) *PPU {
 		VRAM:         [2048]uint8{},
 		OAMData:      [256]uint8{},
 		Mirroring:    mirroring,
-		Mask:         *NewMaskRegister(),
 		w:            0,
 	}
 }
@@ -92,6 +102,17 @@ func (p *PPU) WriteToPPUCTRL(value uint8) {
 	p.flagNMI = (value & 0b1000_0000) != 0
 
 	p.t = (p.t & 0b1111_0011_1111_1111) | ((uint16(value) & 0b0000_0011) << 10)
+}
+
+func (p *PPU) WriteToPPUMask(value uint8) {
+	p.flagGrayscale = (value & 0b0000_0001)
+	p.flagShowBackgroundLeftMost8px = (value & 0b0000_0010) >> 1
+	p.flagShowSpriteLeftMost8px = (value & 0b0000_0100) >> 2
+	p.flagShowBackground = (value & 0b0000_1000) >> 3
+	p.flagShowSprite = (value & 0b0001_0000) >> 4
+	p.flagEmphasizeRed = (value & 0b0010_0000) >> 5
+	p.flagEmphasizeGreen = (value & 0b0100_0000) >> 6
+	p.flagEmphasizeBlue = (value & 0b1000_0000) >> 7
 }
 
 func (p *PPU) WriteToOAMAddr(value uint8) {
@@ -203,41 +224,4 @@ func (p *PPU) ReadStatus() uint8 {
 	p.flagVblankStarted = 0
 	p.w = 0
 	return result
-}
-
-const (
-	// 7  bit  0
-	// ---- ----
-	// BGRs bMmG
-	// |||| ||||
-	// |||| |||+- Greyscale (0: normal color, 1: produce a greyscale display)
-	// |||| ||+-- 1: Show background in leftmost 8 pixels of screen, 0: Hide
-	// |||| |+--- 1: Show sprites in leftmost 8 pixels of screen, 0: Hide
-	// |||| +---- 1: Show background
-	// |||+------ 1: Show sprites
-	// ||+------- Emphasize red (green on PAL/Dendy)
-	// |+-------- Emphasize green (red on PAL/Dendy)
-	// +--------- Emphasize blue
-	MASK_GREY_SCALE               uint8 = 0b0000_0001
-	MASK_LEFTMOST_8PXL_BACKGROUND uint8 = 0b0000_0010
-	MASK_LEFTMOST_8PXL_SPRITE     uint8 = 0b0000_0100
-	MASK_SHOW_BACKGROUND          uint8 = 0b0000_1000
-	MASK_SHOW_SPRITES             uint8 = 0b0001_0000
-	MASK_ENPHASIZE_RED            uint8 = 0b0010_0000
-	MASK_ENPHASIZE_GREEN          uint8 = 0b0100_0000
-	MASK_EMPHASIZE_BLUE           uint8 = 0b1000_0000
-)
-
-type MaskRegister struct {
-	Bits uint8
-}
-
-func NewMaskRegister() *MaskRegister {
-	return &MaskRegister{
-		Bits: 0,
-	}
-}
-
-func (m *MaskRegister) Update(data uint8) {
-	m.Bits = data
 }
