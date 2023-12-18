@@ -8,7 +8,6 @@ type PPU struct {
 	VRAM               [2048]uint8
 	InternalDataBuffer uint8
 	Mirroring          Mirroring
-	Ctrl               ControlRegister
 	Mask               MaskRegister
 	Status             StatusRegister
 	OAMAddress         uint8
@@ -20,6 +19,16 @@ type PPU struct {
 	x uint8  // fine x scroll(3bit)
 	w uint8  // write toggle(1bit)
 	f uint8  // even/odd frame flag(1bit)
+
+	// $2000 PPUCTRL
+	flagNameTable       uint8 // 0: $2000; 1: $2400; 2: $2800; 3: $2C00
+	flagIncrement       uint8 // 0: add 1; 1: add 32
+	flagSpriteTable     uint8 // 0: $0000; 1: $1000; ignored in 8x16 mode
+	flagBackgroundTable uint8 // 0: $0000; 1: $1000
+	flagSpriteSize      uint8 // 0: 8x8; 1: 8x16
+	flagMasterSlave     uint8 // 0: read EXT; 1: write EXT
+	flagNMI             bool  // 0: off; 1: on
+
 }
 
 func NewPPU(characterRom []uint8, mirroring Mirroring) *PPU {
@@ -29,7 +38,6 @@ func NewPPU(characterRom []uint8, mirroring Mirroring) *PPU {
 		VRAM:         [2048]uint8{},
 		OAMData:      [256]uint8{},
 		Mirroring:    mirroring,
-		Ctrl:         *NewControlRegister(),
 		Status:       *NewStatusRegister(),
 		Mask:         *NewMaskRegister(),
 		w:            0,
@@ -73,7 +81,15 @@ func (p *PPU) WriteToPPUScroll(value uint8) {
 }
 
 func (p *PPU) WriteToPPUCTRL(value uint8) {
-	p.Ctrl.Update(value)
+	p.flagNameTable = (value & 0b0000_0011)
+	p.flagIncrement = (value & 0b0000_0100) >> 2
+	p.flagSpriteTable = (value & 0b0000_1000) >> 3
+	p.flagBackgroundTable = (value & 0b0001_0000) >> 4
+	p.flagSpriteSize = (value & 0b0010_0000) >> 5
+	p.flagMasterSlave = (value & 0b0100_0000) >> 6
+	p.flagNMI = (value & 0b1000_0000) != 0
+
+	p.t = (p.t & 0b1111_0011_1111_1111) | ((uint16(value) & 0b0000_0011) << 10)
 }
 
 func (p *PPU) WriteToOAMAddr(value uint8) {
@@ -96,9 +112,17 @@ func (p *PPU) ReadOAMData() uint8 {
 	return p.OAMData[p.OAMAddress]
 }
 
+func (p *PPU) VRAMAddrIncrement() uint8 {
+	if p.flagIncrement == 0 {
+		return 1
+	} else {
+		return 32
+	}
+}
+
 func (p *PPU) ReadData() uint8 {
 	addr := p.v
-	p.v += uint16(p.Ctrl.VRAMAddrIncrement())
+	p.v += uint16(p.VRAMAddrIncrement())
 
 	var result uint8
 
@@ -136,7 +160,7 @@ func (p *PPU) WriteData(value uint8) {
 		panic(fmt.Sprintf("unexpected access to mirrored space %d", addr))
 	}
 
-	p.v += uint16(p.Ctrl.VRAMAddrIncrement())
+	p.v += uint16(p.VRAMAddrIncrement())
 }
 
 // Horizontal:
@@ -174,56 +198,6 @@ func (p *PPU) ReadStatus() uint8 {
 	p.Status.SetVblankStatus(false)
 	p.w = 0
 	return result
-}
-
-const (
-	// Control Register
-	// 7  bit  0
-	// ---- ----
-	// VPHB SINN
-	// |||| ||||
-	// |||| ||++- Base nametable address
-	// |||| ||    (0 = $2000; 1 = $2400; 2 = $2800; 3 = $2C00)
-	// |||| |+--- VRAM address increment per CPU read/write of PPUDATA
-	// |||| |     (0: add 1, going across; 1: add 32, going down)
-	// |||| +---- Sprite pattern table address for 8x8 sprites
-	// ||||       (0: $0000; 1: $1000; ignored in 8x16 mode)
-	// |||+------ Background pattern table address (0: $0000; 1: $1000)
-	// ||+------- Sprite size (0: 8x8 pixels; 1: 8x16 pixels)
-	// |+-------- PPU master/slave select
-	// |          (0: read backdrop from EXT pins; 1: output color on EXT pins)
-	// +--------- Generate an NMI at the start of the
-	//            vertical blanking interval (0: off; 1: on)
-	CR_NAMETABLE1              uint8 = 0b0000_0001
-	CR_NAMETABLE2              uint8 = 0b0000_0010
-	CR_VRAM_ADD_INCREMENT      uint8 = 0b0000_0100
-	CR_SPRITE_PATTERN_ADDR     uint8 = 0b0000_1000
-	CR_BACKGROUND_PATTERN_ADDR uint8 = 0b0001_0000
-	CR_SPRITE_SIZE             uint8 = 0b0010_0000
-	CR_MASTER_SLAVE_SELECT     uint8 = 0b0100_0000
-	CR_GENERATE_NMI            uint8 = 0b1000_0000
-)
-
-type ControlRegister struct {
-	Bits uint8
-}
-
-func NewControlRegister() *ControlRegister {
-	return &ControlRegister{
-		Bits: 0,
-	}
-}
-
-func (c *ControlRegister) VRAMAddrIncrement() uint8 {
-	if c.Bits&CR_VRAM_ADD_INCREMENT == 0 {
-		return 1
-	} else {
-		return 32
-	}
-}
-
-func (c *ControlRegister) Update(data uint8) {
-	c.Bits = data
 }
 
 const (

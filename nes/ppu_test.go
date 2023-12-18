@@ -44,7 +44,7 @@ func TestPPUVramReadsCrossPage(t *testing.T) {
 
 func TestPPUVramReadsStep32(t *testing.T) {
 	ppu := NewPPU(nil, MIRROR_HORIZONTAL)
-	ppu.WriteToPPUCTRL(CR_VRAM_ADD_INCREMENT)
+	ppu.WriteToPPUCTRL(0b0000_0100)
 	ppu.VRAM[0x01ff] = 0x66
 	ppu.VRAM[0x01ff+32] = 0x77
 	ppu.VRAM[0x01ff+64] = 0x88
