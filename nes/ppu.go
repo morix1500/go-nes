@@ -10,8 +10,6 @@ type PPU struct {
 	VRAM               [2048]uint8
 	InternalDataBuffer uint8
 	Mirroring          Mirroring
-	OAMAddress         uint8
-	OAMData            [256]uint8
 
 	// PPU internal registers
 	v uint16 // current vram address(15bit)
@@ -43,6 +41,12 @@ type PPU struct {
 	flagSpriteOverflow uint8
 	flagSpriteZeroHit  uint8
 	flagVblankStarted  uint8
+
+	// $2003 OAMADDR
+	OAMAddress uint8
+
+	// $2004 OAMDATA
+	OAMData [256]uint8
 }
 
 func NewPPU(characterRom []uint8, mirroring Mirroring) *PPU {
