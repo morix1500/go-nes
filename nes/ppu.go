@@ -9,7 +9,6 @@ type PPU struct {
 	InternalDataBuffer uint8
 	Mirroring          Mirroring
 	Mask               MaskRegister
-	Status             StatusRegister
 	OAMAddress         uint8
 	OAMData            [256]uint8
 
@@ -29,6 +28,10 @@ type PPU struct {
 	flagMasterSlave     uint8 // 0: read EXT; 1: write EXT
 	flagNMI             bool  // 0: off; 1: on
 
+	// $2002 PPUSTATUS
+	flagSpriteOverflow uint8
+	flagSpriteZeroHit  uint8
+	flagVblankStarted  uint8
 }
 
 func NewPPU(characterRom []uint8, mirroring Mirroring) *PPU {
@@ -38,7 +41,6 @@ func NewPPU(characterRom []uint8, mirroring Mirroring) *PPU {
 		VRAM:         [2048]uint8{},
 		OAMData:      [256]uint8{},
 		Mirroring:    mirroring,
-		Status:       *NewStatusRegister(),
 		Mask:         *NewMaskRegister(),
 		w:            0,
 	}
@@ -194,76 +196,13 @@ func (p *PPU) mirrorVRAMAddr(addr uint16) uint16 {
 }
 
 func (p *PPU) ReadStatus() uint8 {
-	result := p.Status.Bits
-	p.Status.SetVblankStatus(false)
+	var result uint8
+	result = result | (p.flagSpriteOverflow << 5)
+	result = result | (p.flagSpriteZeroHit << 6)
+	result = result | (p.flagVblankStarted << 7)
+	p.flagVblankStarted = 0
 	p.w = 0
 	return result
-}
-
-const (
-	// Status Register
-	// 7  bit  0
-	// ---- ----
-	// VSO. ....
-	// |||| ||||
-	// |||+-++++- Least significant bits previously written into a PPU register
-	// |||        (due to register not being updated for this address)
-	// ||+------- Sprite overflow. The intent was for this flag to be set
-	// ||         whenever more than eight sprites appear on a scanline, but a
-	// ||         hardware bug causes the actual behavior to be more complicated
-	// ||         and generate false positives as well as false negatives; see
-	// ||         PPU sprite evaluation. This flag is set during sprite
-	// ||         evaluation and cleared at dot 1 (the second dot) of the
-	// ||         pre-render line.
-	// |+-------- Sprite 0 Hit.  Set when a nonzero pixel of sprite 0 overlaps
-	// |          a nonzero background pixel; cleared at dot 1 of the pre-render
-	// |          line.  Used for raster timing.
-	// +--------- Vertical blank has started (0: not in vblank; 1: in vblank).
-	//            Set at dot 1 of line 241 (the line *after* the post-render
-	//            line); cleared after reading $2002 and at dot 1 of the
-	//            pre-render line.
-	S_NOTUSED         uint8 = 0b0000_0001
-	S_NOTUSED2        uint8 = 0b0000_0010
-	S_NOTUSED3        uint8 = 0b0000_0100
-	S_NOTUSED4        uint8 = 0b0000_1000
-	S_NOTUSED5        uint8 = 0b0001_0000
-	S_SPRITE_OVERFLOW uint8 = 0b0010_0000
-	S_SPRITE_ZERO_HIT uint8 = 0b0100_0000
-	S_VBLANK_STARTED  uint8 = 0b1000_0000
-)
-
-type StatusRegister struct {
-	Bits uint8
-}
-
-func NewStatusRegister() *StatusRegister {
-	return &StatusRegister{
-		Bits: 0,
-	}
-}
-
-func (s *StatusRegister) SetVblankStatus(status bool) {
-	if status {
-		s.Bits = s.Bits | S_VBLANK_STARTED
-	} else {
-		s.Bits = s.Bits &^ S_VBLANK_STARTED
-	}
-}
-
-func (s *StatusRegister) SetSpriteZeroHitStatus(status bool) {
-	if status {
-		s.Bits = s.Bits | S_SPRITE_ZERO_HIT
-	} else {
-		s.Bits = s.Bits &^ S_SPRITE_ZERO_HIT
-	}
-}
-
-func (s *StatusRegister) SetSpriteOverflowStatus(status bool) {
-	if status {
-		s.Bits = s.Bits | S_SPRITE_OVERFLOW
-	} else {
-		s.Bits = s.Bits &^ S_SPRITE_OVERFLOW
-	}
 }
 
 const (

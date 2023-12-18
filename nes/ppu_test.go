@@ -152,12 +152,12 @@ func TestPPUVramMirroring(t *testing.T) {
 
 func TestReadStatusResetsVblank(t *testing.T) {
 	ppu := NewPPU(nil, MIRROR_HORIZONTAL)
-	ppu.Status.SetVblankStatus(true)
+	ppu.flagVblankStarted = 1
 
 	status := ppu.ReadStatus()
 
 	assert.Equal(t, uint8(1), status>>7)
-	assert.Equal(t, uint8(0), ppu.Status.Bits>>7)
+	assert.Equal(t, uint8(0), ppu.flagVblankStarted)
 }
 
 func TestOAMReadWrite(t *testing.T) {
