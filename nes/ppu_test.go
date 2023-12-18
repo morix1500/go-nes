@@ -162,13 +162,13 @@ func TestReadStatusResetsVblank(t *testing.T) {
 
 func TestOAMReadWrite(t *testing.T) {
 	ppu := NewPPU(nil, MIRROR_HORIZONTAL)
-	ppu.WriteToOAMAddr(0x10)
-	ppu.WriteToOAMData(0x66)
-	ppu.WriteToOAMData(0x77)
+	ppu.WriteToPPUOAMAddr(0x10)
+	ppu.WriteToPPUOAMData(0x66)
+	ppu.WriteToPPUOAMData(0x77)
 
-	ppu.WriteToOAMAddr(0x10)
+	ppu.WriteToPPUOAMAddr(0x10)
 	assert.Equal(t, uint8(0x66), ppu.ReadOAMData())
-	ppu.WriteToOAMAddr(0x11)
+	ppu.WriteToPPUOAMAddr(0x11)
 	assert.Equal(t, uint8(0x77), ppu.ReadOAMData())
 }
 
@@ -182,15 +182,15 @@ func TestOAMDMA(t *testing.T) {
 	data[0] = 0x77
 	data[255] = 0x88
 
-	ppu.WriteToOAMAddr(0x10)
+	ppu.WriteToPPUOAMAddr(0x10)
 	ppu.WriteOAMDMA(data[:])
 
-	ppu.WriteToOAMAddr(0xf)
+	ppu.WriteToPPUOAMAddr(0xf)
 	assert.Equal(t, uint8(0x88), ppu.ReadOAMData())
 
-	ppu.WriteToOAMAddr(0x10)
+	ppu.WriteToPPUOAMAddr(0x10)
 	assert.Equal(t, uint8(0x77), ppu.ReadOAMData())
 
-	ppu.WriteToOAMAddr(0x11)
+	ppu.WriteToPPUOAMAddr(0x11)
 	assert.Equal(t, uint8(0x66), ppu.ReadOAMData())
 }

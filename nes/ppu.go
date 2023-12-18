@@ -119,11 +119,11 @@ func (p *PPU) WriteToPPUMask(value uint8) {
 	p.flagEmphasizeBlue = (value & 0b1000_0000) >> 7
 }
 
-func (p *PPU) WriteToOAMAddr(value uint8) {
+func (p *PPU) WriteToPPUOAMAddr(value uint8) {
 	p.OAMAddress = value
 }
 
-func (p *PPU) WriteToOAMData(value uint8) {
+func (p *PPU) WriteToPPUOAMData(value uint8) {
 	p.OAMData[p.OAMAddress] = value
 	p.OAMAddress++
 }

@@ -58,6 +58,10 @@ func (b *Bus) ReadMemory(addr uint16) uint8 {
 		return b.CpuVRAM[mirrorDownAddr]
 	} else if addr == 0x2000 || addr == 0x2001 || addr == 0x2003 || addr == 0x2005 || addr == 0x2006 || addr == 0x4014 {
 		panic(fmt.Sprintf("attempt to read from write-only PPU address: %d", addr))
+	} else if addr == 0x2002 {
+		return b.PPU.ReadStatus()
+	} else if addr == 0x2004 {
+		return b.PPU.ReadOAMData()
 	} else if addr == 0x2007 {
 		return b.PPU.ReadData()
 	} else if addr >= 0x2008 && addr <= PPU_REGISTERS_MIRRORS_END {
@@ -75,10 +79,25 @@ func (b *Bus) WriteMemory(addr uint16, data uint8) {
 		b.CpuVRAM[mirrorDownAddr] = data
 	} else if addr == 0x2000 {
 		b.PPU.WriteToPPUCTRL(data)
+	} else if addr == 0x2001 {
+		b.PPU.WriteToPPUMask(data)
+	} else if addr == 0x2003 {
+		b.PPU.WriteToPPUOAMAddr(data)
+	} else if addr == 0x2004 {
+		b.PPU.WriteToPPUOAMData(data)
+	} else if addr == 0x2005 {
+		b.PPU.WriteToPPUScroll(data)
 	} else if addr == 0x2006 {
 		b.PPU.WriteToPPUAddr(data)
 	} else if addr == 0x2007 {
 		b.PPU.WriteData(data)
+	} else if addr == 0x4014 {
+		hi := uint16(data) << 8
+		buf := make([]uint8, 256)
+		for i := 0; i < 256; i++ {
+			buf[i] = b.ReadMemory(hi + uint16(i))
+		}
+		b.PPU.WriteOAMDMA(buf)
 	} else if addr >= 0x2008 && addr <= PPU_REGISTERS_MIRRORS_END {
 		mirrorDownAddr := addr & 0b00100000_00000111
 		b.CpuVRAM[mirrorDownAddr] = data
