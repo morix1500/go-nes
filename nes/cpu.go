@@ -524,6 +524,13 @@ func (c *CPU) tya() {
 	c.setRegisterA(c.registerY)
 }
 
+func (c *CPU) brk() {
+	c.stackPush16(c.programCounter)
+	c.php()
+	c.sei()
+	c.programCounter = c.readMemory16(0xfffe)
+}
+
 func (c *CPU) lax(opsInfo OpeCode) {
 	c.lda(opsInfo)
 	c.tax()
@@ -660,6 +667,7 @@ func (c *CPU) Run() {
 
 		switch opsInfo.Mnemonic {
 		case "BRK":
+			//c.brk()
 			return
 		case "ADC":
 			c.adc(opsInfo)
