@@ -15,11 +15,11 @@ type PPU struct {
 	OAMData            [256]uint8
 
 	// PPU internal registers
-	v uint16 // current vram address
-	t uint16 // temporary vram address
-	x uint8  // fine x scroll
-	w bool   // write toggle
-	f bool   // even/odd frame flag
+	v uint16 // current vram address(15bit)
+	t uint16 // temporary vram address(15bit)
+	x uint8  // fine x scroll(3bit)
+	w uint8  // write toggle(1bit)
+	f uint8  // even/odd frame flag(1bit)
 }
 
 func NewPPU(characterRom []uint8, mirroring Mirroring) *PPU {
@@ -32,18 +32,43 @@ func NewPPU(characterRom []uint8, mirroring Mirroring) *PPU {
 		Ctrl:         *NewControlRegister(),
 		Status:       *NewStatusRegister(),
 		Mask:         *NewMaskRegister(),
-		w:            false,
+		w:            0,
 	}
 }
 
 func (p *PPU) WriteToPPUAddr(value uint8) {
-	if p.w {
-		p.t = (p.t & 0xff00) | (uint16(value))
-		p.v = p.t
-		p.w = false
+	// 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 0
+	// -  0  h  h  h  h  h h l l l l l l l l
+
+	if p.w == 0 {
+		// high byte
+		p.t = (p.t & 0b1000_0000_1111_1111) | ((uint16(value) & 0b0011_1111) << 8)
+		p.w = 1
 	} else {
-		p.t = (p.t & 0x00ff) | ((uint16(value) & 0x3f) << 8)
-		p.w = true
+		// low byte
+		p.t = (p.t & 0b1111_1111_0000_0000) | (uint16(value))
+		p.v = p.t
+		p.w = 0
+	}
+}
+
+// $2005 PPU scroll register
+func (p *PPU) WriteToPPUScroll(value uint8) {
+	// 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 0
+	// -  y  y  y  -  -  y y y y y x x x x x
+
+	if p.w == 0 {
+		// X scroll
+		// 1回目の書き込みでは、値の0-2ビット目がxレジスタに入り、3-8ビット目がtレジスタの0-4ビット目に入る
+		p.x = value & 0b0000_0111
+		p.t = (p.t & 0b1111_1111_1110_0000) | (uint16(value) >> 3)
+		p.w = 1
+	} else {
+		// Y scroll
+		// 2回目の書き込みでは、値の0-2ビット目がtレジスタの12-14ビット目に入り、3-8ビット目がtレジスタの5-9ビット目に入る
+		p.t = (p.t & 0b1000_1111_1111_1111) | ((uint16(value) & 0b0000_0111) << 12)
+		p.t = (p.t & 0b1111_1100_0001_1111) | ((uint16(value) & 0b1111_1000) << 2)
+		p.w = 0
 	}
 }
 
@@ -147,7 +172,7 @@ func (p *PPU) mirrorVRAMAddr(addr uint16) uint16 {
 func (p *PPU) ReadStatus() uint8 {
 	result := p.Status.Bits
 	p.Status.SetVblankStatus(false)
-	p.w = false
+	p.w = 0
 	return result
 }
 
