@@ -122,3 +122,7 @@ func (b *Bus) Tick(cycles uint8) {
 	b.Cycles += uint(cycles)
 	b.PPU.Tick(cycles * 3)
 }
+
+func (b *Bus) PollNMIStatus() bool {
+	return b.PPU.NMIInterrupt
+}

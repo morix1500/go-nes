@@ -12,6 +12,7 @@ type PPU struct {
 	Mirroring          Mirroring
 	Scanline           uint16
 	Cycles             uint
+	NMIInterrupt       bool // occurs NMI interrupt
 
 	// PPU internal registers
 	v uint16 // current vram address(15bit)
@@ -58,6 +59,7 @@ func NewPPU(characterRom []uint8, mirroring Mirroring) *PPU {
 		VRAM:         [2048]uint8{},
 		OAMData:      [256]uint8{},
 		Mirroring:    mirroring,
+		NMIInterrupt: false,
 		w:            0,
 	}
 }
@@ -99,6 +101,8 @@ func (p *PPU) WriteToPPUScroll(value uint8) {
 }
 
 func (p *PPU) WriteToPPUCTRL(value uint8) {
+	beforeFlagNMI := p.flagNMI
+
 	p.flagNameTable = (value & 0b0000_0011)
 	p.flagIncrement = (value & 0b0000_0100) >> 2
 	p.flagSpriteTable = (value & 0b0000_1000) >> 3
@@ -108,6 +112,10 @@ func (p *PPU) WriteToPPUCTRL(value uint8) {
 	p.flagNMI = (value & 0b1000_0000) != 0
 
 	p.t = (p.t & 0b1111_0011_1111_1111) | ((uint16(value) & 0b0000_0011) << 10)
+
+	if p.flagNMI && !beforeFlagNMI && p.flagVblankStarted == 1 {
+		p.NMIInterrupt = true
+	}
 }
 
 func (p *PPU) WriteToPPUMask(value uint8) {
@@ -240,12 +248,14 @@ func (p *PPU) Tick(cycles uint8) bool {
 		if p.Scanline == 241 {
 			if p.flagNMI {
 				p.flagVblankStarted = 1
+				p.NMIInterrupt = true
 			}
 		}
 
 		if p.Scanline >= 262 {
 			p.Scanline = 0
 			p.flagVblankStarted = 0
+			p.NMIInterrupt = false
 			return true
 		}
 	}

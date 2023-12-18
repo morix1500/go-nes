@@ -643,6 +643,10 @@ func (c *CPU) Run() {
 	var opsInfo OpeCode
 	var ok bool
 	for {
+		if c.bus.PollNMIStatus() {
+			c.InterruptNMI()
+		}
+
 		fmt.Println(trace(c))
 		code := c.readMemory(c.programCounter)
 		c.programCounter++
@@ -871,4 +875,13 @@ func (c *CPU) addBranchCycles(address uint16) {
 	if PageDiffer(c.programCounter, address) {
 		c.cycle++
 	}
+}
+
+func (c *CPU) InterruptNMI() {
+	c.stackPush16(c.programCounter)
+	status := c.status & ^CPU_FLAG_BREAK | CPU_FLAG_BREAK2
+	c.stackPush(status)
+	c.status |= CPU_FLAG_INTERRUPT_DISABLE
+	c.bus.Tick(2)
+	c.programCounter = c.readMemory16(0xfffa)
 }
