@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"go-nes/nes"
+	"go-nes/ui"
 	"log"
 	"log/slog"
 	"os"
@@ -26,8 +27,10 @@ func main() {
 	slog.Info(fmt.Sprintf("Program Rom Length: %d", len(c.ProgramRom)))
 	slog.Info(fmt.Sprintf("Charactor Rom Length: %d", len(c.CharacterRom)))
 
-	b := nes.NewBus(c)
-	cpu := nes.NewCPU(b)
-	cpu.Reset()
-	cpu.Run()
+	ui.View(c.CharacterRom)
+
+	//b := nes.NewBus(c)
+	//cpu := nes.NewCPU(b)
+	//cpu.Reset()
+	//cpu.Run()
 }
