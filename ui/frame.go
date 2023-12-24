@@ -14,6 +14,7 @@ import (
 const (
 	WIDTH  = 256
 	HEIGHT = 240
+	SCALE  = 3
 
 	VERTEX_SHADER_SOURCE = `
 	#version 410
@@ -44,22 +45,14 @@ var (
 		{0.5, 0.5, 0},
 		{0.5, -0.5, 0},
 	}
-	color = []float32{
-		1, 1, 1,
-	}
 )
 
 type pixel struct {
 	drawable uint32
-	points   [6][6]float32
 }
 
 func (p *pixel) draw() {
-	points := make([]float32, 36)
-	for i, arr := range p.points {
-		copy(points[i*6:], arr[:])
-	}
-	gl.BindVertexArray(makeVao(points))
+	gl.BindVertexArray(p.drawable)
 	gl.DrawArrays(gl.TRIANGLES, 0, int32(len(squareArrays)))
 }
 
@@ -69,12 +62,13 @@ type Frame struct {
 
 func NewFrame() *Frame {
 	return &Frame{
-		Pixels: make([][]*pixel, HEIGHT),
+		Pixels: make([][]*pixel, HEIGHT*8),
 	}
 }
 
 func (f *Frame) SetPixel(ind, x, y uint, r, g, b uint8) {
-	var points [6][6]float32
+	points := make([]float32, 36)
+	index := 0
 
 	for i := 0; i < len(squareArrays); i++ {
 		for j := 0; j < len(squareArrays[i]); j++ {
@@ -88,22 +82,24 @@ func (f *Frame) SetPixel(ind, x, y uint, r, g, b uint8) {
 				size = 1.0 / float32(HEIGHT)
 				position = float32(HEIGHT-1-y) * size
 			default:
+				index++
 				continue
 			}
 
 			if squareArrays[i][j] < 0 {
-				points[i][j] = (position * 2) - 1
+				points[index] = (position * 2) - 1
 			} else {
-				points[i][j] = ((position + size) * 2) - 1
+				points[index] = ((position + size) * 2) - 1
 			}
+			index++
 		}
 		col := []float32{float32(r) / 255, float32(g) / 255, float32(b) / 255}
-		copy(points[i][3:], col)
+		copy(points[index:], col)
+		index += 3
 	}
 
 	pixel := &pixel{
-		points: points,
-		//drawable: makeVao(points),
+		drawable: makeVao(points),
 	}
 	f.Pixels[ind] = append(f.Pixels[ind], pixel)
 }
@@ -151,7 +147,7 @@ func ShowTileBank(characterRom []uint8, bank uint) *Frame {
 	tileY := uint(0)
 	ind := uint(0)
 
-	for tileN := uint(0); tileN < 240; tileN++ {
+	for tileN := uint(0); tileN < 255; tileN++ {
 		if tileN%20 == 0 {
 			tileX = 0
 			tileY += 10
@@ -179,13 +175,13 @@ func ShowTileBank(characterRom []uint8, bank uint) *Frame {
 				default:
 					panic("unknown value")
 				}
-				tmpx := 7 - x + (tileX * 8)
+				tmpx := 7 - x + (tileX * 8) + (tileX * 2)
 				tmpy := y + tileY
 				frame.SetPixel(ind, uint(tmpx), uint(tmpy), uint8(r), uint8(g), uint8(b))
 			}
 		}
 		ind++
-		tileX += 2
+		tileX++
 	}
 
 	return frame
@@ -231,7 +227,7 @@ func initGlfw() *glfw.Window {
 	glfw.WindowHint(glfw.OpenGLProfile, glfw.OpenGLCoreProfile)
 	glfw.WindowHint(glfw.OpenGLForwardCompatible, glfw.True)
 
-	window, err := glfw.CreateWindow(WIDTH, HEIGHT, "Morix NES", nil, nil)
+	window, err := glfw.CreateWindow(WIDTH*SCALE, HEIGHT*SCALE, "Morix NES", nil, nil)
 	if err != nil {
 		panic(err)
 	}
