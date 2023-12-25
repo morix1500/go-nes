@@ -7,6 +7,9 @@ import (
 	"log"
 	"log/slog"
 	"os"
+	"runtime"
+
+	"github.com/go-gl/glfw/v3.2/glfw"
 )
 
 func main() {
@@ -27,10 +30,25 @@ func main() {
 	slog.Info(fmt.Sprintf("Program Rom Length: %d", len(c.ProgramRom)))
 	slog.Info(fmt.Sprintf("Charactor Rom Length: %d", len(c.CharacterRom)))
 
-	ui.View(c.CharacterRom)
+	frame := ui.NewFrame()
 
-	//b := nes.NewBus(c)
-	//cpu := nes.NewCPU(b)
-	//cpu.Reset()
-	//cpu.Run()
+	//ui.View(c.CharacterRom)
+
+	runtime.LockOSThread()
+
+	window := ui.InitGlfw()
+	defer glfw.Terminate()
+
+	program := ui.InitOpenGL()
+
+	b := nes.NewBus(c, func(p *nes.PPU) {
+		ui.Render(p, frame)
+		for !window.ShouldClose() {
+			ui.Draw(frame.Pixels, window, program)
+		}
+	})
+	//b := nes.NewBus(c, nil)
+	cpu := nes.NewCPU(b)
+	cpu.Reset()
+	cpu.Run()
 }

@@ -77,7 +77,7 @@ func TestCPULDA(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program), nil)
 			cpu := NewCPU(bus)
 			for addr, value := range tt.memory {
 				cpu.writeMemory(addr, value)
@@ -106,7 +106,7 @@ func TestCPULDX(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program), nil)
 			cpu := NewCPU(bus)
 			cpu.Reset()
 			cpu.Run()
@@ -132,7 +132,7 @@ func TestCPULDY(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program), nil)
 			cpu := NewCPU(bus)
 			cpu.Reset()
 			cpu.Run()
@@ -185,7 +185,7 @@ func TestCPUSTA(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program), nil)
 			cpu := NewCPU(bus)
 			for addr, value := range tt.memory {
 				cpu.writeMemory(addr, value)
@@ -217,7 +217,7 @@ func TestCPUSTX(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program), nil)
 			cpu := NewCPU(bus)
 			for addr, value := range tt.memory {
 				cpu.writeMemory(addr, value)
@@ -249,7 +249,7 @@ func TestCPUSTY(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program), nil)
 			cpu := NewCPU(bus)
 			for addr, value := range tt.memory {
 				cpu.writeMemory(addr, value)
@@ -264,7 +264,7 @@ func TestCPUSTY(t *testing.T) {
 }
 
 func TestCPUInterpretLDAImmediateLoad(t *testing.T) {
-	bus := NewBus(createTestCartridgeForCPUTest([]uint8{0xa9, 0x05, 0x00}))
+	bus := NewBus(createTestCartridgeForCPUTest([]uint8{0xa9, 0x05, 0x00}), nil)
 	cpu := NewCPU(bus)
 	cpu.Reset()
 	cpu.Run()
@@ -274,7 +274,7 @@ func TestCPUInterpretLDAImmediateLoad(t *testing.T) {
 }
 
 func TestCPUInterpretLDAZeroFlag(t *testing.T) {
-	bus := NewBus(createTestCartridgeForCPUTest([]uint8{0xa9, 0x00, 0x00}))
+	bus := NewBus(createTestCartridgeForCPUTest([]uint8{0xa9, 0x00, 0x00}), nil)
 	cpu := NewCPU(bus)
 	cpu.Reset()
 	cpu.Run()
@@ -282,7 +282,7 @@ func TestCPUInterpretLDAZeroFlag(t *testing.T) {
 }
 
 func TestCPUInterpretaTaxMoveAToX(t *testing.T) {
-	bus := NewBus(createTestCartridgeForCPUTest([]uint8{0xa9, 0x0a, 0xaa, 0x00}))
+	bus := NewBus(createTestCartridgeForCPUTest([]uint8{0xa9, 0x0a, 0xaa, 0x00}), nil)
 	cpu := NewCPU(bus)
 	cpu.Reset()
 	cpu.Run()
@@ -290,7 +290,7 @@ func TestCPUInterpretaTaxMoveAToX(t *testing.T) {
 }
 
 func TestCPUInterpretaTaxMoveAToY(t *testing.T) {
-	bus := NewBus(createTestCartridgeForCPUTest([]uint8{0xa9, 0x0a, 0xa8, 0x00}))
+	bus := NewBus(createTestCartridgeForCPUTest([]uint8{0xa9, 0x0a, 0xa8, 0x00}), nil)
 	cpu := NewCPU(bus)
 	cpu.Reset()
 	cpu.Run()
@@ -298,7 +298,7 @@ func TestCPUInterpretaTaxMoveAToY(t *testing.T) {
 }
 
 func TestCPUINC(t *testing.T) {
-	bus := NewBus(createTestCartridgeForCPUTest([]uint8{0xe6, 0x10, 0x00}))
+	bus := NewBus(createTestCartridgeForCPUTest([]uint8{0xe6, 0x10, 0x00}), nil)
 	cpu := NewCPU(bus)
 	cpu.writeMemory(0x10, 0x05)
 	cpu.Reset()
@@ -307,7 +307,7 @@ func TestCPUINC(t *testing.T) {
 }
 
 func TestCPUInterpretInx(t *testing.T) {
-	bus := NewBus(createTestCartridgeForCPUTest([]uint8{0xa9, 0x02, 0xaa, 0xe8, 0x00}))
+	bus := NewBus(createTestCartridgeForCPUTest([]uint8{0xa9, 0x02, 0xaa, 0xe8, 0x00}), nil)
 	cpu := NewCPU(bus)
 	cpu.Reset()
 	cpu.Run()
@@ -315,7 +315,7 @@ func TestCPUInterpretInx(t *testing.T) {
 }
 
 func TestCPUInterpretInxOverflow(t *testing.T) {
-	bus := NewBus(createTestCartridgeForCPUTest([]uint8{0xa9, 0xff, 0xaa, 0xe8, 0xe8, 0x00}))
+	bus := NewBus(createTestCartridgeForCPUTest([]uint8{0xa9, 0xff, 0xaa, 0xe8, 0xe8, 0x00}), nil)
 	cpu := NewCPU(bus)
 	cpu.Reset()
 	cpu.Run()
@@ -323,7 +323,7 @@ func TestCPUInterpretInxOverflow(t *testing.T) {
 }
 
 func TestCPUInterpretIny(t *testing.T) {
-	bus := NewBus(createTestCartridgeForCPUTest([]uint8{0xa9, 0x02, 0xa8, 0xc8, 0x00}))
+	bus := NewBus(createTestCartridgeForCPUTest([]uint8{0xa9, 0x02, 0xa8, 0xc8, 0x00}), nil)
 	cpu := NewCPU(bus)
 	cpu.Reset()
 	cpu.Run()
@@ -331,7 +331,7 @@ func TestCPUInterpretIny(t *testing.T) {
 }
 
 func TestCPUInterpretInyOverflow(t *testing.T) {
-	bus := NewBus(createTestCartridgeForCPUTest([]uint8{0xa9, 0xff, 0xa8, 0xc8, 0xc8, 0x00}))
+	bus := NewBus(createTestCartridgeForCPUTest([]uint8{0xa9, 0xff, 0xa8, 0xc8, 0xc8, 0x00}), nil)
 	cpu := NewCPU(bus)
 	cpu.Reset()
 	cpu.Run()
@@ -339,7 +339,7 @@ func TestCPUInterpretInyOverflow(t *testing.T) {
 }
 
 func TestCPUInterpret5OpsWorkingTogether(t *testing.T) {
-	bus := NewBus(createTestCartridgeForCPUTest([]uint8{0xa9, 0xc0, 0xaa, 0xe8, 0x00}))
+	bus := NewBus(createTestCartridgeForCPUTest([]uint8{0xa9, 0xc0, 0xaa, 0xe8, 0x00}), nil)
 	cpu := NewCPU(bus)
 	cpu.Reset()
 	cpu.Run()
@@ -347,7 +347,7 @@ func TestCPUInterpret5OpsWorkingTogether(t *testing.T) {
 }
 
 func TestCPUInterpretLDAFromMemory(t *testing.T) {
-	bus := NewBus(createTestCartridgeForCPUTest([]uint8{0xa5, 0x10, 0x00}))
+	bus := NewBus(createTestCartridgeForCPUTest([]uint8{0xa5, 0x10, 0x00}), nil)
 	cpu := NewCPU(bus)
 	cpu.writeMemory(0x10, 0x55)
 	cpu.Reset()
@@ -385,7 +385,7 @@ func TestCPUADC(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program), nil)
 			cpu := NewCPU(bus)
 			cpu.Reset()
 			cpu.Run()
@@ -421,7 +421,7 @@ func TestCPUAND(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program), nil)
 			cpu := NewCPU(bus)
 			cpu.Reset()
 			cpu.Run()
@@ -456,7 +456,7 @@ func TestCPUASLAccumulator(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program), nil)
 			cpu := NewCPU(bus)
 			cpu.Reset()
 			cpu.Run()
@@ -496,7 +496,7 @@ func TestCPUASL(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program), nil)
 			cpu := NewCPU(bus)
 			for addr, value := range tt.memory {
 				cpu.writeMemory(addr, value)
@@ -538,7 +538,7 @@ func TestCPUBCC(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program), nil)
 			cpu := NewCPU(bus)
 			cpu.Reset()
 			cpu.Run()
@@ -574,7 +574,7 @@ func TestCPUBCS(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program), nil)
 			cpu := NewCPU(bus)
 			cpu.Reset()
 			cpu.Run()
@@ -605,7 +605,7 @@ func TestCPUBEQ(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program), nil)
 			cpu := NewCPU(bus)
 			cpu.Reset()
 			cpu.Run()
@@ -650,7 +650,7 @@ func TestCPUBIT(t *testing.T) {
 	for _, tt := range cases {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program), nil)
 			cpu := NewCPU(bus)
 			for addr, value := range tt.memory {
 				cpu.writeMemory(addr, value)
@@ -684,7 +684,7 @@ func TestCPUBMI(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program), nil)
 			cpu := NewCPU(bus)
 			cpu.Reset()
 			cpu.Run()
@@ -715,7 +715,7 @@ func TestCPUBNE(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program), nil)
 			cpu := NewCPU(bus)
 			cpu.Reset()
 			cpu.Run()
@@ -746,7 +746,7 @@ func TestCPUBPL(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program), nil)
 			cpu := NewCPU(bus)
 			cpu.Reset()
 			cpu.Run()
@@ -776,7 +776,7 @@ func TestCPUBVC(t *testing.T) {
 	for _, tt := range cases {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program), nil)
 			cpu := NewCPU(bus)
 			cpu.Reset()
 			cpu.Run()
@@ -806,7 +806,7 @@ func TestCPUBVS(t *testing.T) {
 	for _, tt := range cases {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program), nil)
 			cpu := NewCPU(bus)
 			cpu.Reset()
 			cpu.Run()
@@ -831,7 +831,7 @@ func TestCPUCLC(t *testing.T) {
 	for _, tt := range cases {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program), nil)
 			cpu := NewCPU(bus)
 			cpu.Reset()
 			cpu.Run()
@@ -856,7 +856,7 @@ func TestCPUCLD(t *testing.T) {
 	for _, tt := range cases {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program), nil)
 			cpu := NewCPU(bus)
 			cpu.Reset()
 			cpu.Run()
@@ -881,7 +881,7 @@ func TestCPUSEC(t *testing.T) {
 	for _, tt := range cases {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program), nil)
 			cpu := NewCPU(bus)
 			cpu.Reset()
 			cpu.Run()
@@ -906,7 +906,7 @@ func TestCPUSED(t *testing.T) {
 	for _, tt := range cases {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program), nil)
 			cpu := NewCPU(bus)
 			cpu.Reset()
 			cpu.Run()
@@ -931,7 +931,7 @@ func TestCPUCLI(t *testing.T) {
 	for _, tt := range cases {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program), nil)
 			cpu := NewCPU(bus)
 			cpu.Reset()
 			cpu.Run()
@@ -956,7 +956,7 @@ func TestCPUSEI(t *testing.T) {
 	for _, tt := range cases {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program), nil)
 			cpu := NewCPU(bus)
 			cpu.Reset()
 			cpu.Run()
@@ -980,7 +980,7 @@ func TestCPUCLV(t *testing.T) {
 	for _, tt := range cases {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program), nil)
 			cpu := NewCPU(bus)
 			cpu.Reset()
 			cpu.Run()
@@ -1018,7 +1018,7 @@ func TestCPUCMP(t *testing.T) {
 	for _, tt := range cases {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program), nil)
 			cpu := NewCPU(bus)
 			for addr, value := range tt.memory {
 				cpu.writeMemory(addr, value)
@@ -1059,7 +1059,7 @@ func TestCPUCPX(t *testing.T) {
 	for _, tt := range cases {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program), nil)
 			cpu := NewCPU(bus)
 			for addr, value := range tt.memory {
 				cpu.writeMemory(addr, value)
@@ -1100,7 +1100,7 @@ func TestCPUCPY(t *testing.T) {
 	for _, tt := range cases {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program), nil)
 			cpu := NewCPU(bus)
 			for addr, value := range tt.memory {
 				cpu.writeMemory(addr, value)
@@ -1113,7 +1113,7 @@ func TestCPUCPY(t *testing.T) {
 }
 
 func TestCPUDEC(t *testing.T) {
-	bus := NewBus(createTestCartridgeForCPUTest([]uint8{0xc6, 0x10, 0x00}))
+	bus := NewBus(createTestCartridgeForCPUTest([]uint8{0xc6, 0x10, 0x00}), nil)
 	cpu := NewCPU(bus)
 	cpu.writeMemory(0x10, 0x05)
 	cpu.Reset()
@@ -1122,7 +1122,7 @@ func TestCPUDEC(t *testing.T) {
 }
 
 func TestCPUDEX(t *testing.T) {
-	bus := NewBus(createTestCartridgeForCPUTest([]uint8{0xa2, 0x10, 0xca, 0x00}))
+	bus := NewBus(createTestCartridgeForCPUTest([]uint8{0xa2, 0x10, 0xca, 0x00}), nil)
 	cpu := NewCPU(bus)
 	cpu.Reset()
 	cpu.Run()
@@ -1130,7 +1130,7 @@ func TestCPUDEX(t *testing.T) {
 }
 
 func TestCPUDEY(t *testing.T) {
-	bus := NewBus(createTestCartridgeForCPUTest([]uint8{0xa0, 0x10, 0x88, 0x00}))
+	bus := NewBus(createTestCartridgeForCPUTest([]uint8{0xa0, 0x10, 0x88, 0x00}), nil)
 	cpu := NewCPU(bus)
 	cpu.Reset()
 	cpu.Run()
@@ -1156,7 +1156,7 @@ func TestCPUEOR(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program), nil)
 			cpu := NewCPU(bus)
 			cpu.Reset()
 			cpu.Run()
@@ -1185,7 +1185,7 @@ func TestCPUORA(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program), nil)
 			cpu := NewCPU(bus)
 			cpu.Reset()
 			cpu.Run()
@@ -1224,7 +1224,7 @@ func TestCPUJMP(t *testing.T) {
 	for _, tt := range cases {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program), nil)
 			cpu := NewCPU(bus)
 			for addr, value := range tt.memory {
 				cpu.writeMemory(addr, value)
@@ -1255,7 +1255,7 @@ func TestCPUJSR(t *testing.T) {
 	for _, tt := range cases {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program), nil)
 			cpu := NewCPU(bus)
 			for addr, value := range tt.memory {
 				cpu.writeMemory(addr, value)
@@ -1288,7 +1288,7 @@ func TestCPURTS(t *testing.T) {
 	for _, tt := range cases {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program), nil)
 			cpu := NewCPU(bus)
 			for addr, value := range tt.memory {
 				cpu.writeMemory(addr, value)
@@ -1325,7 +1325,7 @@ func TestCPULSRAccumulator(t *testing.T) {
 	for _, tt := range cases {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program), nil)
 			cpu := NewCPU(bus)
 			for addr, value := range tt.memory {
 				cpu.writeMemory(addr, value)
@@ -1364,7 +1364,7 @@ func TestCPULSR(t *testing.T) {
 	for _, tt := range cases {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program), nil)
 			cpu := NewCPU(bus)
 			for addr, value := range tt.memory {
 				cpu.writeMemory(addr, value)
@@ -1397,7 +1397,7 @@ func TestCPUPHA(t *testing.T) {
 	for _, tt := range cases {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program), nil)
 			cpu := NewCPU(bus)
 
 			for addr, value := range tt.memory {
@@ -1431,7 +1431,7 @@ func TestCPUPLA(t *testing.T) {
 	for _, tt := range cases {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program), nil)
 			cpu := NewCPU(bus)
 
 			for addr, value := range tt.memory {
@@ -1461,7 +1461,7 @@ func TestCPUPHP(t *testing.T) {
 	for _, tt := range cases {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program), nil)
 			cpu := NewCPU(bus)
 			cpu.Reset()
 			cpu.Run()
@@ -1488,7 +1488,7 @@ func TestCPUPLP(t *testing.T) {
 	for _, tt := range cases {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program), nil)
 			cpu := NewCPU(bus)
 			cpu.Reset()
 			cpu.Run()
@@ -1521,7 +1521,7 @@ func TestCPUROLAccumulator(t *testing.T) {
 	for _, tt := range cases {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program), nil)
 			cpu := NewCPU(bus)
 			cpu.Reset()
 			cpu.Run()
@@ -1556,7 +1556,7 @@ func TestCPUROL(t *testing.T) {
 	for _, tt := range cases {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program), nil)
 			cpu := NewCPU(bus)
 			for addr, value := range tt.memory {
 				cpu.writeMemory(addr, value)
@@ -1596,7 +1596,7 @@ func TestCPURORAccumulator(t *testing.T) {
 	for _, tt := range cases {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program), nil)
 			cpu := NewCPU(bus)
 			cpu.Reset()
 			cpu.Run()
@@ -1631,7 +1631,7 @@ func TestCPUROR(t *testing.T) {
 	for _, tt := range cases {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program), nil)
 			cpu := NewCPU(bus)
 			for addr, value := range tt.memory {
 				cpu.writeMemory(addr, value)
@@ -1648,7 +1648,7 @@ func TestCPUROR(t *testing.T) {
 
 func TestCPURTI(t *testing.T) {
 	program := []uint8{0x40, 0x00}
-	bus := NewBus(createTestCartridgeForCPUTest(program))
+	bus := NewBus(createTestCartridgeForCPUTest(program), nil)
 	cpu := NewCPU(bus)
 	cpu.writeMemory(0x01fd, 0x80)
 	cpu.writeMemory(0x01fc, 0x11)
@@ -1700,7 +1700,7 @@ func TestCPUSBC(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			bus := NewBus(createTestCartridgeForCPUTest(tt.program))
+			bus := NewBus(createTestCartridgeForCPUTest(tt.program), nil)
 			cpu := NewCPU(bus)
 			for addr, value := range tt.memory {
 				cpu.writeMemory(addr, value)
@@ -1715,7 +1715,7 @@ func TestCPUSBC(t *testing.T) {
 
 func TestCPUTSX(t *testing.T) {
 	program := []uint8{0xba, 0x00}
-	bus := NewBus(createTestCartridgeForCPUTest(program))
+	bus := NewBus(createTestCartridgeForCPUTest(program), nil)
 	cpu := NewCPU(bus)
 	cpu.stackPointer = 0x05
 	cpu.programCounter = 0x8000
@@ -1725,7 +1725,7 @@ func TestCPUTSX(t *testing.T) {
 
 func TestCPUTXA(t *testing.T) {
 	program := []uint8{0x8a, 0x00}
-	bus := NewBus(createTestCartridgeForCPUTest(program))
+	bus := NewBus(createTestCartridgeForCPUTest(program), nil)
 	cpu := NewCPU(bus)
 	cpu.registerX = 0x05
 	cpu.programCounter = 0x8000
@@ -1735,7 +1735,7 @@ func TestCPUTXA(t *testing.T) {
 
 func TestCPUTXS(t *testing.T) {
 	program := []uint8{0x9a, 0x00}
-	bus := NewBus(createTestCartridgeForCPUTest(program))
+	bus := NewBus(createTestCartridgeForCPUTest(program), nil)
 	cpu := NewCPU(bus)
 	cpu.registerX = 0x05
 	cpu.programCounter = 0x8000
@@ -1745,7 +1745,7 @@ func TestCPUTXS(t *testing.T) {
 
 func TestCPUTYA(t *testing.T) {
 	program := []uint8{0x98, 0x00}
-	bus := NewBus(createTestCartridgeForCPUTest(program))
+	bus := NewBus(createTestCartridgeForCPUTest(program), nil)
 	cpu := NewCPU(bus)
 	cpu.registerY = 0x05
 	cpu.programCounter = 0x8000
@@ -1755,7 +1755,7 @@ func TestCPUTYA(t *testing.T) {
 
 func TestCPUSAX(t *testing.T) {
 	program := []uint8{0x87, 0x01, 0x00}
-	bus := NewBus(createTestCartridgeForCPUTest(program))
+	bus := NewBus(createTestCartridgeForCPUTest(program), nil)
 	cpu := NewCPU(bus)
 	cpu.registerX = 0xaa
 	cpu.registerA = 0x8c

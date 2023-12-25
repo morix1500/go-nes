@@ -118,6 +118,45 @@ func (p *PPU) WriteToPPUCTRL(value uint8) {
 	}
 }
 
+func (p *PPU) ReadCTRLNameTableAddress() uint16 {
+	switch p.flagNameTable {
+	case 0:
+		return 0x2000
+	case 1:
+		return 0x2400
+	case 2:
+		return 0x2800
+	case 3:
+		return 0x2c00
+	default:
+		panic("unknown name table address")
+	}
+}
+
+func (p *PPU) ReadCTRLBackGroundTableAddress() uint16 {
+	return uint16(p.flagBackgroundTable) * 0x1000
+}
+
+func (p *PPU) ReadCTRLSpriteSize() uint16 {
+	if p.flagSpriteSize == 0 {
+		return 0
+	} else {
+		return 1
+	}
+}
+
+func (p *PPU) ReadCTRLSpriteTableAddress() uint16 {
+	return uint16(p.flagSpriteTable) * 0x1000
+}
+
+func (p *PPU) ReadCTRLMasterSlave() uint8 {
+	return p.flagSpriteTable
+}
+
+func (p *PPU) ReadCTRLNMI() bool {
+	return p.flagNMI
+}
+
 func (p *PPU) WriteToPPUMask(value uint8) {
 	p.flagGrayscale = (value & 0b0000_0001)
 	p.flagShowBackgroundLeftMost8px = (value & 0b0000_0010) >> 1

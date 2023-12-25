@@ -654,7 +654,7 @@ func (c *CPU) Run() {
 			c.InterruptNMI()
 		}
 
-		fmt.Println(trace(c))
+		//fmt.Println(trace(c))
 		code := c.readMemory(c.programCounter)
 		c.programCounter++
 		programCounterState := c.programCounter

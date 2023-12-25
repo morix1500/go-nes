@@ -1,7 +1,5 @@
 package nes
 
-import "fmt"
-
 //  _______________ $10000  _______________
 // | PRG-ROM       |       |               |
 // | Upper Bank    |       |               |
@@ -31,10 +29,11 @@ import "fmt"
 // |_______________| $0000 |_______________|
 
 type Bus struct {
-	CpuVRAM   [2048]uint8
-	Cartridge *Cartridge
-	PPU       *PPU
-	Cycles    uint
+	CpuVRAM          [2048]uint8
+	Cartridge        *Cartridge
+	PPU              *PPU
+	Cycles           uint
+	GameLoopCallback func(*PPU)
 }
 
 const (
@@ -44,12 +43,13 @@ const (
 	PPU_REGISTERS_MIRRORS_END uint16 = 0x3fff
 )
 
-func NewBus(cartridge *Cartridge) *Bus {
+func NewBus(cartridge *Cartridge, gameLoopCallback func(*PPU)) *Bus {
 	ppu := NewPPU(cartridge.CharacterRom, cartridge.ScreenMirroring)
 	return &Bus{
-		CpuVRAM:   [2048]uint8{},
-		Cartridge: cartridge,
-		PPU:       ppu,
+		CpuVRAM:          [2048]uint8{},
+		Cartridge:        cartridge,
+		PPU:              ppu,
+		GameLoopCallback: gameLoopCallback,
 	}
 }
 
@@ -58,13 +58,23 @@ func (b *Bus) ReadMemory(addr uint16) uint8 {
 		mirrorDownAddr := addr & 0b111_1111_1111
 		return b.CpuVRAM[mirrorDownAddr]
 	} else if addr == 0x2000 || addr == 0x2001 || addr == 0x2003 || addr == 0x2005 || addr == 0x2006 || addr == 0x4014 {
-		panic(fmt.Sprintf("attempt to read from write-only PPU address: %d", addr))
+		//panic(fmt.Sprintf("attempt to read from write-only PPU address: %d", addr))
+		return 0
 	} else if addr == 0x2002 {
 		return b.PPU.ReadStatus()
 	} else if addr == 0x2004 {
 		return b.PPU.ReadOAMData()
 	} else if addr == 0x2007 {
 		return b.PPU.ReadData()
+	} else if addr >= 0x4000 && addr <= 0x4015 {
+		// ignore APU
+		return 0
+	} else if addr == 0x4016 {
+		// ignore joypad 1
+		return 0
+	} else if addr == 0x4017 {
+		// ignore joypad 2
+		return 0
 	} else if addr >= 0x2008 && addr <= PPU_REGISTERS_MIRRORS_END {
 		mirrorDownAddr := addr & 0b00100000_00000111
 		return b.ReadMemory(mirrorDownAddr)
@@ -99,6 +109,15 @@ func (b *Bus) WriteMemory(addr uint16, data uint8) {
 			buf[i] = b.ReadMemory(hi + uint16(i))
 		}
 		b.PPU.WriteOAMDMA(buf)
+	} else if (addr >= 0x4000 && addr <= 0x4013) || addr == 0x4015 {
+		// ignore APU
+		return
+	} else if addr == 0x4016 {
+		// ignore joypad 1
+		return
+	} else if addr == 0x4017 {
+		// ignore joypad 2
+		return
 	} else if addr >= 0x2008 && addr <= PPU_REGISTERS_MIRRORS_END {
 		mirrorDownAddr := addr & 0b00100000_00000111
 		b.CpuVRAM[mirrorDownAddr] = data
@@ -120,7 +139,15 @@ func (b *Bus) ReadProgramRom(addr uint16) uint8 {
 
 func (b *Bus) Tick(cycles uint8) {
 	b.Cycles += uint(cycles)
-	b.PPU.Tick(cycles * 3)
+
+	//nmiBefore := b.PPU.NMIInterrupt
+	//b.PPU.Tick(cycles * 3)
+	//nmiAfter := b.PPU.NMIInterrupt
+
+	//if !nmiBefore && nmiAfter {
+	if b.PPU.Tick(cycles * 3) {
+		b.GameLoopCallback(b.PPU)
+	}
 }
 
 func (b *Bus) PollNMIStatus() bool {

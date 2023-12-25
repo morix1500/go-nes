@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"go-nes/nes"
 	"log"
-	"runtime"
 	"strings"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
@@ -187,22 +186,22 @@ func ShowTileBank(characterRom []uint8, bank uint) *Frame {
 	return frame
 }
 
-func View(characterRom []uint8) {
-	runtime.LockOSThread()
+//func View(characterRom []uint8) {
+//	runtime.LockOSThread()
+//
+//	window := InitGlfw()
+//	defer glfw.Terminate()
+//
+//	program := InitOpenGL()
+//	//frame := ShowTile(0, characterRom, 1, 0)
+//	frame := ShowTileBank(characterRom, 1)
+//
+//	for !window.ShouldClose() {
+//		Draw(frame.Pixels, window, program)
+//	}
+//}
 
-	window := initGlfw()
-	defer glfw.Terminate()
-
-	program := initOpenGL()
-	//frame := ShowTile(0, characterRom, 1, 0)
-	frame := ShowTileBank(characterRom, 1)
-
-	for !window.ShouldClose() {
-		draw(frame.Pixels, window, program)
-	}
-}
-
-func draw(cells [][]*pixel, window *glfw.Window, program uint32) {
+func Draw(cells [][]*pixel, window *glfw.Window, program uint32) {
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 	gl.UseProgram(program)
 
@@ -216,7 +215,7 @@ func draw(cells [][]*pixel, window *glfw.Window, program uint32) {
 	window.SwapBuffers()
 }
 
-func initGlfw() *glfw.Window {
+func InitGlfw() *glfw.Window {
 	if err := glfw.Init(); err != nil {
 		panic(err)
 	}
@@ -236,7 +235,7 @@ func initGlfw() *glfw.Window {
 	return window
 }
 
-func initOpenGL() uint32 {
+func InitOpenGL() uint32 {
 	if err := gl.Init(); err != nil {
 		panic(err)
 	}
