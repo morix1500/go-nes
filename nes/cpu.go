@@ -42,7 +42,6 @@ type CPU struct {
 	programCounter uint16
 	stackPointer   uint8
 	bus            *Bus
-	cycle          uint8
 }
 
 func NewCPU(bus *Bus) *CPU {
@@ -54,47 +53,57 @@ func NewCPU(bus *Bus) *CPU {
 		programCounter: 0,
 		stackPointer:   0xfd,
 		bus:            bus,
-		cycle:          0,
 	}
 }
 
 func (c *CPU) lda(opsInfo OpeCode) {
-	addr := c.getOperandAddress(opsInfo)
+	addr, pageCrossed := c.getOperandAddress(opsInfo)
 	value := c.readMemory(addr)
 	c.setRegisterA(value)
+	if pageCrossed && opsInfo.AddCycleIfPageCrossed {
+		c.bus.Tick(1)
+	}
 }
 
 func (c *CPU) ldx(opsInfo OpeCode) {
-	addr := c.getOperandAddress(opsInfo)
+	addr, pageCrossed := c.getOperandAddress(opsInfo)
 	value := c.readMemory(addr)
 	c.registerX = value
 	c.updateZeroAndNegativeFlags(c.registerX)
+
+	if pageCrossed && opsInfo.AddCycleIfPageCrossed {
+		c.bus.Tick(1)
+	}
 }
 
 func (c *CPU) ldy(opsInfo OpeCode) {
-	addr := c.getOperandAddress(opsInfo)
+	addr, pageCrossed := c.getOperandAddress(opsInfo)
 	value := c.readMemory(addr)
 	c.registerY = value
 	c.updateZeroAndNegativeFlags(c.registerY)
+
+	if pageCrossed && opsInfo.AddCycleIfPageCrossed {
+		c.bus.Tick(1)
+	}
 }
 
 func (c *CPU) sta(opsInfo OpeCode) {
-	addr := c.getOperandAddress(opsInfo)
+	addr, _ := c.getOperandAddress(opsInfo)
 	c.writeMemory(addr, c.registerA)
 }
 
 func (c *CPU) stx(opsInfo OpeCode) {
-	addr := c.getOperandAddress(opsInfo)
+	addr, _ := c.getOperandAddress(opsInfo)
 	c.writeMemory(addr, c.registerX)
 }
 
 func (c *CPU) sty(opsInfo OpeCode) {
-	addr := c.getOperandAddress(opsInfo)
+	addr, _ := c.getOperandAddress(opsInfo)
 	c.writeMemory(addr, c.registerY)
 }
 
 func (cpu *CPU) adc(opsInfo OpeCode) {
-	addr := cpu.getOperandAddress(opsInfo)
+	addr, pageCrossed := cpu.getOperandAddress(opsInfo)
 	a := cpu.registerA
 	b := cpu.readMemory(addr)
 	c := cpu.status & CPU_FLAG_CARRY
@@ -113,11 +122,19 @@ func (cpu *CPU) adc(opsInfo OpeCode) {
 	} else {
 		cpu.status &= ^CPU_FLAG_OVERFLOW
 	}
+
+	if pageCrossed && opsInfo.AddCycleIfPageCrossed {
+		cpu.bus.Tick(1)
+	}
 }
 
 func (c *CPU) and(opsInfo OpeCode) {
-	addr := c.getOperandAddress(opsInfo)
+	addr, pageCrossed := c.getOperandAddress(opsInfo)
 	c.setRegisterA(c.registerA & c.readMemory(addr))
+
+	if pageCrossed && opsInfo.AddCycleIfPageCrossed {
+		c.bus.Tick(1)
+	}
 }
 
 func (c *CPU) asl(opsInfo OpeCode) {
@@ -131,7 +148,7 @@ func (c *CPU) asl(opsInfo OpeCode) {
 		return
 	}
 
-	addr := c.getOperandAddress(opsInfo)
+	addr, _ := c.getOperandAddress(opsInfo)
 	value := c.readMemory(addr)
 	if value&0x80 != 0 {
 		c.status |= CPU_FLAG_CARRY
@@ -145,7 +162,7 @@ func (c *CPU) asl(opsInfo OpeCode) {
 
 func (c *CPU) bcc() {
 	if c.status&CPU_FLAG_CARRY == 0 {
-		addr := c.getOperandAddress(CPU_OPS_CODES[0x90])
+		addr, _ := c.getOperandAddress(CPU_OPS_CODES[0x90])
 		c.addBranchCycles(addr)
 		c.programCounter += addr + 1
 	}
@@ -153,7 +170,7 @@ func (c *CPU) bcc() {
 
 func (c *CPU) bcs() {
 	if c.status&CPU_FLAG_CARRY != 0 {
-		addr := c.getOperandAddress(CPU_OPS_CODES[0xb0])
+		addr, _ := c.getOperandAddress(CPU_OPS_CODES[0xb0])
 		c.addBranchCycles(addr)
 		c.programCounter += addr + 1
 	}
@@ -161,14 +178,14 @@ func (c *CPU) bcs() {
 
 func (c *CPU) beq() {
 	if c.status&CPU_FLAG_ZERO != 0 {
-		addr := c.getOperandAddress(CPU_OPS_CODES[0xf0])
+		addr, _ := c.getOperandAddress(CPU_OPS_CODES[0xf0])
 		c.addBranchCycles(addr)
 		c.programCounter += addr + 1
 	}
 }
 
 func (c *CPU) bit(opsInfo OpeCode) {
-	addr := c.getOperandAddress(opsInfo)
+	addr, _ := c.getOperandAddress(opsInfo)
 	value := c.readMemory(addr)
 	if value&c.registerA == 0 {
 		c.status |= CPU_FLAG_ZERO
@@ -191,7 +208,7 @@ func (c *CPU) bit(opsInfo OpeCode) {
 
 func (c *CPU) bmi() {
 	if c.status&CPU_FLAG_NEGATIVE != 0 {
-		addr := c.getOperandAddress(CPU_OPS_CODES[0x30])
+		addr, _ := c.getOperandAddress(CPU_OPS_CODES[0x30])
 		c.addBranchCycles(addr)
 		c.programCounter += addr + 1
 	}
@@ -199,7 +216,7 @@ func (c *CPU) bmi() {
 
 func (c *CPU) bne() {
 	if c.status&CPU_FLAG_ZERO == 0 {
-		addr := c.getOperandAddress(CPU_OPS_CODES[0xd0])
+		addr, _ := c.getOperandAddress(CPU_OPS_CODES[0xd0])
 		c.addBranchCycles(addr)
 		c.programCounter += addr + 1
 	}
@@ -207,7 +224,7 @@ func (c *CPU) bne() {
 
 func (c *CPU) bpl() {
 	if c.status&CPU_FLAG_NEGATIVE == 0 {
-		addr := c.getOperandAddress(CPU_OPS_CODES[0x10])
+		addr, _ := c.getOperandAddress(CPU_OPS_CODES[0x10])
 		c.addBranchCycles(addr)
 		c.programCounter += addr + 1
 	}
@@ -215,7 +232,7 @@ func (c *CPU) bpl() {
 
 func (c *CPU) bvc() {
 	if c.status&CPU_FLAG_OVERFLOW == 0 {
-		addr := c.getOperandAddress(CPU_OPS_CODES[0x50])
+		addr, _ := c.getOperandAddress(CPU_OPS_CODES[0x50])
 		c.addBranchCycles(addr)
 		c.programCounter += addr + 1
 	}
@@ -223,7 +240,7 @@ func (c *CPU) bvc() {
 
 func (c *CPU) bvs() {
 	if c.status&CPU_FLAG_OVERFLOW != 0 {
-		addr := c.getOperandAddress(CPU_OPS_CODES[0x70])
+		addr, _ := c.getOperandAddress(CPU_OPS_CODES[0x70])
 		c.addBranchCycles(addr)
 		c.programCounter += addr + 1
 	}
@@ -246,7 +263,7 @@ func (c *CPU) clv() {
 }
 
 func (c *CPU) cmp(opsInfo OpeCode) {
-	addr := c.getOperandAddress(opsInfo)
+	addr, pageCrossed := c.getOperandAddress(opsInfo)
 	value := c.readMemory(addr)
 	if c.registerA >= value {
 		c.status |= CPU_FLAG_CARRY
@@ -255,10 +272,14 @@ func (c *CPU) cmp(opsInfo OpeCode) {
 	}
 
 	c.updateZeroAndNegativeFlags(c.registerA - value)
+
+	if pageCrossed && opsInfo.AddCycleIfPageCrossed {
+		c.bus.Tick(1)
+	}
 }
 
 func (c *CPU) cpx(opsInfo OpeCode) {
-	addr := c.getOperandAddress(opsInfo)
+	addr, _ := c.getOperandAddress(opsInfo)
 	value := c.readMemory(addr)
 	if c.registerX >= value {
 		c.status |= CPU_FLAG_CARRY
@@ -270,7 +291,7 @@ func (c *CPU) cpx(opsInfo OpeCode) {
 }
 
 func (c *CPU) cpy(opsInfo OpeCode) {
-	addr := c.getOperandAddress(opsInfo)
+	addr, _ := c.getOperandAddress(opsInfo)
 	value := c.readMemory(addr)
 	if c.registerY >= value {
 		c.status |= CPU_FLAG_CARRY
@@ -282,7 +303,7 @@ func (c *CPU) cpy(opsInfo OpeCode) {
 }
 
 func (c *CPU) dec(opsInfo OpeCode) {
-	addr := c.getOperandAddress(opsInfo)
+	addr, _ := c.getOperandAddress(opsInfo)
 	value := c.readMemory(addr)
 	value--
 	c.writeMemory(addr, value)
@@ -300,12 +321,16 @@ func (c *CPU) dey() {
 }
 
 func (c *CPU) eor(opsInfo OpeCode) {
-	addr := c.getOperandAddress(opsInfo)
+	addr, pageCrossed := c.getOperandAddress(opsInfo)
 	c.setRegisterA(c.registerA ^ c.readMemory(addr))
+
+	if pageCrossed && opsInfo.AddCycleIfPageCrossed {
+		c.bus.Tick(1)
+	}
 }
 
 func (c *CPU) inc(opsInfo OpeCode) {
-	addr := c.getOperandAddress(opsInfo)
+	addr, _ := c.getOperandAddress(opsInfo)
 	value := c.readMemory(addr)
 	value++
 	c.writeMemory(addr, value)
@@ -323,7 +348,7 @@ func (c *CPU) iny() {
 }
 
 func (c *CPU) jmp(opsInfo OpeCode) {
-	addr := c.getOperandAddress(opsInfo)
+	addr, _ := c.getOperandAddress(opsInfo)
 
 	if opsInfo.Mode == ABSOLUTE {
 		c.programCounter = addr
@@ -348,7 +373,7 @@ func (c *CPU) jmp(opsInfo OpeCode) {
 }
 
 func (c *CPU) jsr() {
-	addr := c.getOperandAddress(CPU_OPS_CODES[0x20])
+	addr, _ := c.getOperandAddress(CPU_OPS_CODES[0x20])
 	// 2バイト加算している理由は、JSR命令の次の命令を実行するため
 	c.stackPush16(c.programCounter + 2 - 1)
 	c.programCounter = addr
@@ -365,7 +390,7 @@ func (c *CPU) lsr(opsInfo OpeCode) {
 		return
 	}
 
-	addr := c.getOperandAddress(opsInfo)
+	addr, _ := c.getOperandAddress(opsInfo)
 	value := c.readMemory(addr)
 	if value&CPU_FLAG_CARRY != 0 {
 		c.status |= CPU_FLAG_CARRY
@@ -378,8 +403,12 @@ func (c *CPU) lsr(opsInfo OpeCode) {
 }
 
 func (c *CPU) ora(opsInfo OpeCode) {
-	addr := c.getOperandAddress(opsInfo)
+	addr, pageCrossed := c.getOperandAddress(opsInfo)
 	c.setRegisterA(c.registerA | c.readMemory(addr))
+
+	if pageCrossed && opsInfo.AddCycleIfPageCrossed {
+		c.bus.Tick(1)
+	}
 }
 
 func (c *CPU) pha() {
@@ -412,7 +441,7 @@ func (c *CPU) rol(opsInfo OpeCode) {
 		return
 	}
 
-	addr := c.getOperandAddress(opsInfo)
+	addr, _ := c.getOperandAddress(opsInfo)
 	value := c.readMemory(addr)
 	if value&0x80 != 0 {
 		c.status |= CPU_FLAG_CARRY
@@ -440,7 +469,7 @@ func (c *CPU) ror(opsInfo OpeCode) {
 		return
 	}
 
-	addr := c.getOperandAddress(opsInfo)
+	addr, _ := c.getOperandAddress(opsInfo)
 	value := c.readMemory(addr)
 	if value&CPU_FLAG_CARRY != 0 {
 		c.status |= CPU_FLAG_CARRY
@@ -463,7 +492,7 @@ func (c *CPU) rts() {
 }
 
 func (cpu *CPU) sbc(opsInfo OpeCode) {
-	addr := cpu.getOperandAddress(opsInfo)
+	addr, pageCrossed := cpu.getOperandAddress(opsInfo)
 	a := cpu.registerA
 	b := cpu.readMemory(addr)
 	c := cpu.status & CPU_FLAG_CARRY
@@ -482,6 +511,10 @@ func (cpu *CPU) sbc(opsInfo OpeCode) {
 		cpu.status |= CPU_FLAG_OVERFLOW
 	} else {
 		cpu.status &= ^CPU_FLAG_OVERFLOW
+	}
+
+	if pageCrossed && opsInfo.AddCycleIfPageCrossed {
+		cpu.bus.Tick(1)
 	}
 }
 
@@ -537,7 +570,7 @@ func (c *CPU) lax(opsInfo OpeCode) {
 }
 
 func (c *CPU) sax(opsInfo OpeCode) {
-	addr := c.getOperandAddress(opsInfo)
+	addr, _ := c.getOperandAddress(opsInfo)
 	c.writeMemory(addr, c.registerA&c.registerX)
 }
 
@@ -662,8 +695,6 @@ func (c *CPU) Run() {
 		if opsInfo, ok = CPU_OPS_CODES[code]; !ok {
 			panic(fmt.Sprintf("unknown code: %d", code))
 		}
-
-		c.cycle = opsInfo.Cycles
 
 		switch opsInfo.Mnemonic {
 		case "BRK":
@@ -797,7 +828,7 @@ func (c *CPU) Run() {
 			c.sre(opsInfo)
 		}
 
-		c.bus.Tick(c.cycle)
+		c.bus.Tick(opsInfo.Cycles)
 
 		if programCounterState == c.programCounter {
 			c.programCounter += uint16(opsInfo.Length - 1)
@@ -805,11 +836,11 @@ func (c *CPU) Run() {
 	}
 }
 
-func (c *CPU) getOperandAddress(opsInfo OpeCode) uint16 {
+func (c *CPU) getOperandAddress(opsInfo OpeCode) (uint16, bool) {
 	return c.getAbsoluteAddress(opsInfo, c.programCounter)
 }
 
-func (c *CPU) getAbsoluteAddress(opsInfo OpeCode, addr uint16) uint16 {
+func (c *CPU) getAbsoluteAddress(opsInfo OpeCode, addr uint16) (uint16, bool) {
 	var result uint16
 	pageCrossed := false
 
@@ -867,11 +898,7 @@ func (c *CPU) getAbsoluteAddress(opsInfo OpeCode, addr uint16) uint16 {
 		panic(fmt.Sprintf("unknown addressing mode: %d", opsInfo.Mode))
 	}
 
-	if pageCrossed && opsInfo.AddCycleIfPageCrossed {
-		c.cycle++
-	}
-
-	return result
+	return result, pageCrossed
 }
 
 func PageDiffer(a, b uint16) bool {
@@ -879,15 +906,15 @@ func PageDiffer(a, b uint16) bool {
 }
 
 func (c *CPU) addBranchCycles(address uint16) {
-	c.cycle++
+	c.bus.Tick(1)
 	if PageDiffer(c.programCounter, address) {
-		c.cycle++
+		c.bus.Tick(1)
 	}
 }
 
 func (c *CPU) InterruptNMI() {
 	c.stackPush16(c.programCounter)
-	status := c.status & ^CPU_FLAG_BREAK | CPU_FLAG_BREAK2
+	status := c.status | CPU_FLAG_BREAK | CPU_FLAG_BREAK2
 	c.stackPush(status)
 	c.status |= CPU_FLAG_INTERRUPT_DISABLE
 	c.bus.Tick(2)

@@ -285,8 +285,9 @@ func (p *PPU) Tick(cycles uint8) bool {
 		p.Cycles -= 341
 		p.Scanline++
 		if p.Scanline == 241 {
+			p.flagVblankStarted = 1
+			p.flagSpriteZeroHit = 0
 			if p.flagNMI {
-				p.flagVblankStarted = 1
 				p.NMIInterrupt = true
 			}
 		}
@@ -294,6 +295,7 @@ func (p *PPU) Tick(cycles uint8) bool {
 		if p.Scanline >= 262 {
 			p.Scanline = 0
 			p.flagVblankStarted = 0
+			p.flagSpriteZeroHit = 0
 			p.NMIInterrupt = false
 			return true
 		}

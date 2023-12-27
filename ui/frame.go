@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"go-nes/nes"
 	"log"
+	"os"
 	"strings"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
@@ -231,6 +232,7 @@ func InitGlfw() *glfw.Window {
 		panic(err)
 	}
 	window.MakeContextCurrent()
+	window.SetKeyCallback(onKey)
 
 	return window
 }
@@ -297,4 +299,14 @@ func makeVao(points []float32) uint32 {
 	gl.VertexAttribPointer(1, 3, gl.FLOAT, false, 6*4, gl.PtrOffset(3*4))
 
 	return vao
+}
+
+func onKey(w *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {
+	if action == glfw.Press {
+		switch key {
+		case glfw.KeyEscape:
+			w.SetShouldClose(true)
+			os.Exit(0)
+		}
+	}
 }

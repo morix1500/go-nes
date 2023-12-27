@@ -43,9 +43,9 @@ func main() {
 
 	b := nes.NewBus(c, func(p *nes.PPU) {
 		ui.Render(p, frame)
-		for !window.ShouldClose() {
-			ui.Draw(frame.Pixels, window, program)
-		}
+		//for !window.ShouldClose() {
+		ui.Draw(frame.Pixels, window, program)
+		//}
 	})
 	//b := nes.NewBus(c, nil)
 	cpu := nes.NewCPU(b)

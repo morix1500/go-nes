@@ -22,7 +22,7 @@ func trace(cpu *CPU) string {
 		memoryAddr = 0
 		storedValue = 0
 	default:
-		memoryAddr = cpu.getAbsoluteAddress(opsInfo, begin+1)
+		memoryAddr, _ = cpu.getAbsoluteAddress(opsInfo, begin+1)
 		storedValue = cpu.readMemory(memoryAddr)
 	}
 	if begin == 0xE545 {
