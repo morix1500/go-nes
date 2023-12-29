@@ -34,6 +34,7 @@ type Bus struct {
 	PPU              *PPU
 	Cycles           uint
 	GameLoopCallback func(*PPU)
+	RenderFlag       bool
 }
 
 const (
@@ -50,6 +51,7 @@ func NewBus(cartridge *Cartridge, gameLoopCallback func(*PPU)) *Bus {
 		Cartridge:        cartridge,
 		PPU:              ppu,
 		GameLoopCallback: gameLoopCallback,
+		RenderFlag:       false,
 	}
 }
 
@@ -146,10 +148,13 @@ func (b *Bus) Tick(cycles uint8) {
 
 	//if !nmiBefore && nmiAfter {
 	if b.PPU.Tick(cycles * 3) {
-		b.GameLoopCallback(b.PPU)
+		//b.GameLoopCallback(b.PPU)
+		b.RenderFlag = true
 	}
 }
 
 func (b *Bus) PollNMIStatus() bool {
-	return b.PPU.NMIInterrupt
+	f := b.PPU.NMIInterrupt
+	b.PPU.NMIInterrupt = false
+	return f
 }

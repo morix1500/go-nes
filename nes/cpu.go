@@ -679,159 +679,173 @@ func (c *CPU) Reset() {
 	c.stackPointer = 0xfd
 }
 
-func (c *CPU) Run() {
+func (c *CPU) Step() bool {
+	if c.bus.PollNMIStatus() {
+		c.InterruptNMI()
+	}
+
+	//fmt.Println(trace(c))
+	code := c.readMemory(c.programCounter)
+	c.programCounter++
+	programCounterState := c.programCounter
+
 	var opsInfo OpeCode
 	var ok bool
+	if opsInfo, ok = CPU_OPS_CODES[code]; !ok {
+		panic(fmt.Sprintf("unknown code: %d", code))
+	}
+
+	switch opsInfo.Mnemonic {
+	case "BRK":
+		//c.brk()
+		return false
+	case "ADC":
+		c.adc(opsInfo)
+	case "AND":
+		c.and(opsInfo)
+	case "ASL":
+		c.asl(opsInfo)
+	case "BCC":
+		c.bcc()
+	case "BCS":
+		c.bcs()
+	case "BEQ":
+		c.beq()
+	case "BIT":
+		c.bit(opsInfo)
+	case "BMI":
+		c.bmi()
+	case "BNE":
+		c.bne()
+	case "BPL":
+		c.bpl()
+	case "BVC":
+		c.bvc()
+	case "BVS":
+		c.bvs()
+	case "CLC":
+		c.clc()
+	case "CLD":
+		c.cld()
+	case "CLI":
+		c.cli()
+	case "CLV":
+		c.clv()
+	case "CMP":
+		c.cmp(opsInfo)
+	case "CPX":
+		c.cpx(opsInfo)
+	case "CPY":
+		c.cpy(opsInfo)
+	case "DEC":
+		c.dec(opsInfo)
+	case "DEX":
+		c.dex()
+	case "DEY":
+		c.dey()
+	case "EOR":
+		c.eor(opsInfo)
+	case "INC":
+		c.inc(opsInfo)
+	case "INX":
+		c.inx()
+	case "INY":
+		c.iny()
+	case "JMP":
+		c.jmp(opsInfo)
+	case "JSR":
+		c.jsr()
+	case "LDA":
+		c.lda(opsInfo)
+	case "LDX":
+		c.ldx(opsInfo)
+	case "LDY":
+		c.ldy(opsInfo)
+	case "LSR":
+		c.lsr(opsInfo)
+	case "NOP":
+		// 何もしない
+	case "ORA":
+		c.ora(opsInfo)
+	case "PHA":
+		c.pha()
+	case "PHP":
+		c.php()
+	case "PLA":
+		c.pla()
+	case "PLP":
+		c.plp()
+	case "ROL":
+		c.rol(opsInfo)
+	case "ROR":
+		c.ror(opsInfo)
+	case "RTI":
+		c.rti()
+	case "RTS":
+		c.rts()
+	case "SBC", "*SBC":
+		c.sbc(opsInfo)
+	case "SEC":
+		c.sec()
+	case "SED":
+		c.sed()
+	case "SEI":
+		c.sei()
+	case "STA":
+		c.sta(opsInfo)
+	case "STX":
+		c.stx(opsInfo)
+	case "STY":
+		c.sty(opsInfo)
+	case "TAX":
+		c.tax()
+	case "TAY":
+		c.tay()
+	case "TSX":
+		c.tsx()
+	case "TXA":
+		c.txa()
+	case "TXS":
+		c.txs()
+	case "TYA":
+		c.tya()
+	case "*NOP":
+		addr, pageCrossed := c.getOperandAddress(opsInfo)
+		c.readMemory(addr)
+		if pageCrossed && opsInfo.AddCycleIfPageCrossed {
+			c.bus.Tick(1)
+		}
+	case "*LAX":
+		c.lax(opsInfo)
+	case "*SAX":
+		c.sax(opsInfo)
+	case "*DCP":
+		c.dcp(opsInfo)
+	case "*ISB":
+		c.isb(opsInfo)
+	case "*SLO":
+		c.slo(opsInfo)
+	case "*RLA":
+		c.rla(opsInfo)
+	case "*RRA":
+		c.rra(opsInfo)
+	case "*SRE":
+		c.sre(opsInfo)
+	}
+
+	c.bus.Tick(opsInfo.Cycles)
+
+	if programCounterState == c.programCounter {
+		c.programCounter += uint16(opsInfo.Length - 1)
+	}
+
+	return true
+}
+
+func (c *CPU) Run() {
 	for {
-		if c.bus.PollNMIStatus() {
-			c.InterruptNMI()
-		}
-
-		//fmt.Println(trace(c))
-		code := c.readMemory(c.programCounter)
-		c.programCounter++
-		programCounterState := c.programCounter
-
-		if opsInfo, ok = CPU_OPS_CODES[code]; !ok {
-			panic(fmt.Sprintf("unknown code: %d", code))
-		}
-
-		switch opsInfo.Mnemonic {
-		case "BRK":
-			//c.brk()
-			return
-		case "ADC":
-			c.adc(opsInfo)
-		case "AND":
-			c.and(opsInfo)
-		case "ASL":
-			c.asl(opsInfo)
-		case "BCC":
-			c.bcc()
-		case "BCS":
-			c.bcs()
-		case "BEQ":
-			c.beq()
-		case "BIT":
-			c.bit(opsInfo)
-		case "BMI":
-			c.bmi()
-		case "BNE":
-			c.bne()
-		case "BPL":
-			c.bpl()
-		case "BVC":
-			c.bvc()
-		case "BVS":
-			c.bvs()
-		case "CLC":
-			c.clc()
-		case "CLD":
-			c.cld()
-		case "CLI":
-			c.cli()
-		case "CLV":
-			c.clv()
-		case "CMP":
-			c.cmp(opsInfo)
-		case "CPX":
-			c.cpx(opsInfo)
-		case "CPY":
-			c.cpy(opsInfo)
-		case "DEC":
-			c.dec(opsInfo)
-		case "DEX":
-			c.dex()
-		case "DEY":
-			c.dey()
-		case "EOR":
-			c.eor(opsInfo)
-		case "INC":
-			c.inc(opsInfo)
-		case "INX":
-			c.inx()
-		case "INY":
-			c.iny()
-		case "JMP":
-			c.jmp(opsInfo)
-		case "JSR":
-			c.jsr()
-		case "LDA":
-			c.lda(opsInfo)
-		case "LDX":
-			c.ldx(opsInfo)
-		case "LDY":
-			c.ldy(opsInfo)
-		case "LSR":
-			c.lsr(opsInfo)
-		case "NOP", "*NOP":
-			// 何もしない
-		case "ORA":
-			c.ora(opsInfo)
-		case "PHA":
-			c.pha()
-		case "PHP":
-			c.php()
-		case "PLA":
-			c.pla()
-		case "PLP":
-			c.plp()
-		case "ROL":
-			c.rol(opsInfo)
-		case "ROR":
-			c.ror(opsInfo)
-		case "RTI":
-			c.rti()
-		case "RTS":
-			c.rts()
-		case "SBC", "*SBC":
-			c.sbc(opsInfo)
-		case "SEC":
-			c.sec()
-		case "SED":
-			c.sed()
-		case "SEI":
-			c.sei()
-		case "STA":
-			c.sta(opsInfo)
-		case "STX":
-			c.stx(opsInfo)
-		case "STY":
-			c.sty(opsInfo)
-		case "TAX":
-			c.tax()
-		case "TAY":
-			c.tay()
-		case "TSX":
-			c.tsx()
-		case "TXA":
-			c.txa()
-		case "TXS":
-			c.txs()
-		case "TYA":
-			c.tya()
-		case "*LAX":
-			c.lax(opsInfo)
-		case "*SAX":
-			c.sax(opsInfo)
-		case "*DCP":
-			c.dcp(opsInfo)
-		case "*ISB":
-			c.isb(opsInfo)
-		case "*SLO":
-			c.slo(opsInfo)
-		case "*RLA":
-			c.rla(opsInfo)
-		case "*RRA":
-			c.rra(opsInfo)
-		case "*SRE":
-			c.sre(opsInfo)
-		}
-
-		c.bus.Tick(opsInfo.Cycles)
-
-		if programCounterState == c.programCounter {
-			c.programCounter += uint16(opsInfo.Length - 1)
+		if !c.Step() {
+			break
 		}
 	}
 }
@@ -858,12 +872,12 @@ func (c *CPU) getAbsoluteAddress(opsInfo OpeCode, addr uint16) (uint16, bool) {
 	case ABSOLUTE_X:
 		address := c.readMemory16(addr)
 
-		pageCrossed = PageDiffer(address-uint16(c.registerX), address)
+		pageCrossed = PageDiffer(address+uint16(c.registerX), address)
 		result = c.readMemory16(addr) + uint16(c.registerX)
 	case ABSOLUTE_Y:
 		address := c.readMemory16(addr)
 
-		pageCrossed = PageDiffer(address-uint16(c.registerY), address)
+		pageCrossed = PageDiffer(address+uint16(c.registerY), address)
 		result = c.readMemory16(addr) + uint16(c.registerY)
 	case INDIRECT:
 		result = c.readMemory16(addr)
@@ -907,7 +921,7 @@ func PageDiffer(a, b uint16) bool {
 
 func (c *CPU) addBranchCycles(address uint16) {
 	c.bus.Tick(1)
-	if PageDiffer(c.programCounter, address) {
+	if PageDiffer(c.programCounter+1, c.programCounter+address+1) {
 		c.bus.Tick(1)
 	}
 }

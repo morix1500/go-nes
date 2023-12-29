@@ -1,9 +1,6 @@
 package ui
 
-import (
-	"fmt"
-	"go-nes/nes"
-)
+import "go-nes/nes"
 
 func Render(ppu *nes.PPU, frame *Frame) {
 	bank := ppu.ReadCTRLBackGroundTableAddress()
@@ -14,9 +11,6 @@ func Render(ppu *nes.PPU, frame *Frame) {
 		tileX := uint(i % 32)
 		tileY := uint(i / 32)
 		tile := ppu.CharacterRom[(bank + tileAddr*16):(bank + tileAddr*16 + 15 + 1)]
-		if i == 229 {
-			fmt.Println()
-		}
 
 		for y := uint(0); y < 8; y++ {
 			upper := tile[y]

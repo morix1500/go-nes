@@ -41,14 +41,27 @@ func main() {
 
 	program := ui.InitOpenGL()
 
-	b := nes.NewBus(c, func(p *nes.PPU) {
-		ui.Render(p, frame)
-		//for !window.ShouldClose() {
-		ui.Draw(frame.Pixels, window, program)
-		//}
-	})
-	//b := nes.NewBus(c, nil)
+	b := nes.NewBus(c, nil)
 	cpu := nes.NewCPU(b)
 	cpu.Reset()
-	cpu.Run()
+
+	for !window.ShouldClose() {
+		cpu.Step()
+		if b.RenderFlag {
+			ui.Render(b.PPU, frame)
+			ui.Draw(frame.Pixels, window, program)
+			b.RenderFlag = false
+		}
+	}
+
+	//b := nes.NewBus(c, func(p *nes.PPU) {
+	//	ui.Render(p, frame)
+	//	for !window.ShouldClose() {
+	//		ui.Draw(frame.Pixels, window, program)
+	//	}
+	//})
+	////b := nes.NewBus(c, nil)
+	//cpu := nes.NewCPU(b)
+	//cpu.Reset()
+	//cpu.Run()
 }
