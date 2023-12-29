@@ -111,5 +111,5 @@ func trace(cpu *CPU) string {
 
 	asmStr := fmt.Sprintf("%04X %-8s %4s %s", begin, hexStr, opsInfo.Mnemonic, tmp)
 
-	return fmt.Sprintf("%-47s A:%02X X:%02X Y:%02X P:%02X SP:%02X PPU: 0,0 CYC:%d", asmStr, cpu.registerA, cpu.registerX, cpu.registerY, cpu.status, cpu.stackPointer, cpu.bus.Cycles)
+	return fmt.Sprintf("%-47s A:%02X X:%02X Y:%02X P:%02X SP:%02X PPU:%3d,%3d CYC:%d", asmStr, cpu.registerA, cpu.registerX, cpu.registerY, cpu.status, cpu.stackPointer, cpu.bus.PPU.Scanline, cpu.bus.PPU.Cycles, cpu.bus.Cycles)
 }
