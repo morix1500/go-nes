@@ -12,11 +12,6 @@ var errUnsupportedStride = errors.New("unsupported stride, only 32-bit colors su
 
 var errTextureNotBound = errors.New("texture not bound")
 
-const (
-	textureSize = 4096
-	textureDim  = textureSize / 256
-)
-
 type Texture struct {
 	handle  uint32
 	target  uint32 // same target as gl.BindTexture(<this param>, ...)
@@ -34,7 +29,6 @@ func NewTexture(img image.Image, wrapR, wrapS int32) (*Texture, error) {
 	gl.GenTextures(1, &handle)
 
 	target := uint32(gl.TEXTURE_2D)
-	//internalFmt := int32(gl.SRGB_ALPHA)
 	format := uint32(gl.RGBA)
 	width := int32(rgba.Rect.Size().X)
 	height := int32(rgba.Rect.Size().Y)
@@ -56,9 +50,7 @@ func NewTexture(img image.Image, wrapR, wrapS int32) (*Texture, error) {
 	gl.TexParameteri(texture.target, gl.TEXTURE_MIN_FILTER, gl.LINEAR) // minification filter
 	gl.TexParameteri(texture.target, gl.TEXTURE_MAG_FILTER, gl.LINEAR) // magnification filter
 
-	//gl.TexImage2D(target, 0, gl.RGBA, width, height, 0, format, pixType, nil)
 	gl.TexImage2D(target, 0, gl.RGBA, width, height, 0, format, pixType, dataPtr)
-
 	gl.GenerateMipmap(texture.handle)
 
 	return &texture, nil

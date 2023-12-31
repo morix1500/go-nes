@@ -2,7 +2,7 @@ package ui
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strings"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
@@ -76,7 +76,7 @@ func NewShader(src string, sType uint32) (*Shader, error) {
 }
 
 func NewShaderFromFile(file string, sType uint32) (*Shader, error) {
-	src, err := ioutil.ReadFile(file)
+	src, err := os.ReadFile(file)
 	if err != nil {
 		return nil, err
 	}
