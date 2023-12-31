@@ -1,6 +1,9 @@
 package ui
 
-import "go-nes/nes"
+import (
+	"go-nes/nes"
+	"image/color"
+)
 
 func Render(ppu *nes.PPU, frame *Frame) {
 	bank := ppu.ReadCTRLBackGroundTableAddress()
@@ -20,22 +23,28 @@ func Render(ppu *nes.PPU, frame *Frame) {
 				value := (1&lower)<<1 | (1 & upper)
 				upper = upper >> 1
 				lower = lower >> 1
-				var r, g, b uint32
+				//var r, g, b uint32
+				var rgb color.RGBA
 				switch value {
 				case 0:
-					r, g, b, _ = nes.Palletes[0x01].RGBA()
+					//r, g, b, _ = nes.Palletes[0x01].RGBA()
+					rgb = nes.Palletes[0x01]
 				case 1:
-					r, g, b, _ = nes.Palletes[0x23].RGBA()
+					//r, g, b, _ = nes.Palletes[0x23].RGBA()
+					rgb = nes.Palletes[0x23]
 				case 2:
-					r, g, b, _ = nes.Palletes[0x27].RGBA()
+					//r, g, b, _ = nes.Palletes[0x27].RGBA()
+					rgb = nes.Palletes[0x27]
 				case 3:
-					r, g, b, _ = nes.Palletes[0x30].RGBA()
+					//r, g, b, _ = nes.Palletes[0x30].RGBA()
+					rgb = nes.Palletes[0x30]
 				default:
 					panic("unknown value")
 				}
 				tmpx := 7 - x + (tileX * 8)
 				tmpy := tileY*8 + y
-				frame.SetPixel(index, uint(tmpx), uint(tmpy), uint8(r), uint8(g), uint8(b))
+				//frame.SetPixel(index, uint(tmpx), uint(tmpy), uint8(r), uint8(g), uint8(b))
+				frame.renderPixel(tmpx, tmpy, rgb)
 			}
 		}
 		index++

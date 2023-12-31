@@ -302,3 +302,9 @@ func (p *PPU) Tick(cycles uint8) bool {
 	}
 	return false
 }
+
+//func (p *PPU) renderPixel() {
+//	x := p.Cycles - 1
+//	y := p.Scanline
+//
+//}
