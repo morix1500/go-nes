@@ -5,7 +5,6 @@ import (
 	"image"
 	"image/color"
 	"log"
-	"os"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/glfw/v3.2/glfw"
@@ -17,13 +16,28 @@ const (
 	SCALE  = 3
 )
 
+var (
+	keyMap = map[glfw.Key]uint8{
+		glfw.KeyA:     nes.JOYPAD_BUTTON_A,
+		glfw.KeyS:     nes.JOYPAD_BUTTON_B,
+		glfw.KeyEnter: nes.JOYPAD_START,
+		glfw.KeySpace: nes.JOYPAD_SELECT,
+		glfw.KeyUp:    nes.JOYPAD_UP,
+		glfw.KeyDown:  nes.JOYPAD_DOWN,
+		glfw.KeyLeft:  nes.JOYPAD_LEFT,
+		glfw.KeyRight: nes.JOYPAD_RIGHT,
+	}
+)
+
 type Frame struct {
-	Front *image.RGBA
+	Front  *image.RGBA
+	Joypad *nes.Joypad
 }
 
-func NewFrame() *Frame {
+func NewFrame(joypad *nes.Joypad) *Frame {
 	return &Frame{
-		Front: image.NewRGBA(image.Rect(0, 0, WIDTH, HEIGHT)),
+		Front:  image.NewRGBA(image.Rect(0, 0, WIDTH, HEIGHT)),
+		Joypad: joypad,
 	}
 }
 
@@ -42,7 +56,6 @@ func Init() *glfw.Window {
 		panic(err)
 	}
 	window.MakeContextCurrent()
-	window.SetKeyCallback(onKey)
 
 	if err := gl.Init(); err != nil {
 		panic(err)
@@ -54,12 +67,17 @@ func Init() *glfw.Window {
 	return window
 }
 
-func onKey(w *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {
+func (f *Frame) OnKey(w *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {
 	if action == glfw.Press {
-		switch key {
-		case glfw.KeyEscape:
+		if _, exist := keyMap[key]; exist {
+			f.Joypad.Press(keyMap[key])
+		} else if key == glfw.KeyEscape {
 			w.SetShouldClose(true)
-			os.Exit(0)
+		}
+	}
+	if action == glfw.Release {
+		if _, exist := keyMap[key]; exist {
+			f.Joypad.Release(keyMap[key])
 		}
 	}
 }

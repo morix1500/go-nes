@@ -39,8 +39,10 @@ var (
 )
 
 func Run(cpu *nes.CPU, bus *nes.Bus, window *glfw.Window, program *Program) error {
-	frame := NewFrame()
+	frame := NewFrame(bus.JoyPad1)
 	VAO := CreateVAO()
+
+	window.SetKeyCallback(frame.OnKey)
 
 	for !window.ShouldClose() {
 		cpu.Step()

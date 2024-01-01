@@ -32,6 +32,8 @@ type Bus struct {
 	CpuVRAM          [2048]uint8
 	Cartridge        *Cartridge
 	PPU              *PPU
+	JoyPad1          *Joypad
+	JoyPad2          *Joypad
 	Cycles           uint
 	GameLoopCallback func(*PPU)
 	RenderFlag       bool
@@ -50,6 +52,8 @@ func NewBus(cartridge *Cartridge, gameLoopCallback func(*PPU)) *Bus {
 		CpuVRAM:          [2048]uint8{},
 		Cartridge:        cartridge,
 		PPU:              ppu,
+		JoyPad1:          NewJoypad(),
+		JoyPad2:          NewJoypad(),
 		GameLoopCallback: gameLoopCallback,
 		RenderFlag:       false,
 	}
@@ -72,11 +76,9 @@ func (b *Bus) ReadMemory(addr uint16) uint8 {
 		// ignore APU
 		return 0
 	} else if addr == 0x4016 {
-		// ignore joypad 1
-		return 0
+		return b.JoyPad1.Read()
 	} else if addr == 0x4017 {
-		// ignore joypad 2
-		return 0
+		return b.JoyPad2.Read()
 	} else if addr >= 0x2008 && addr <= PPU_REGISTERS_MIRRORS_END {
 		mirrorDownAddr := addr & 0b00100000_00000111
 		return b.ReadMemory(mirrorDownAddr)
@@ -115,11 +117,9 @@ func (b *Bus) WriteMemory(addr uint16, data uint8) {
 		// ignore APU
 		return
 	} else if addr == 0x4016 {
-		// ignore joypad 1
-		return
+		b.JoyPad1.Write(data)
 	} else if addr == 0x4017 {
-		// ignore joypad 2
-		return
+		b.JoyPad2.Write(data)
 	} else if addr >= 0x2008 && addr <= PPU_REGISTERS_MIRRORS_END {
 		mirrorDownAddr := addr & 0b00100000_00000111
 		b.CpuVRAM[mirrorDownAddr] = data
