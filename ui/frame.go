@@ -71,6 +71,7 @@ func (f *Frame) renderPixel(x, y uint, c color.RGBA) {
 func (f *Frame) Render(ppu *nes.PPU) {
 	bank := ppu.ReadCTRLBackGroundTableAddress()
 
+	// Render background
 	for i := 0; i <= 0x03c0; i++ {
 		tileAddr := uint16(ppu.VRAM[i])
 		tileColumn := uint(i % 32)
@@ -82,7 +83,7 @@ func (f *Frame) Render(ppu *nes.PPU) {
 			upper := tile[y]
 			lower := tile[y+8]
 
-			for x := uint(0); x < 8; x++ {
+			for x := 7; x >= 0; x-- {
 				value := (1&lower)<<1 | (1 & upper)
 				upper = upper >> 1
 				lower = lower >> 1
@@ -99,13 +100,14 @@ func (f *Frame) Render(ppu *nes.PPU) {
 				default:
 					panic("unknown value")
 				}
-				tmpx := 7 - x + (tileColumn * 8)
+				tmpx := (tileColumn * 8) + uint(x)
 				tmpy := tileRow*8 + y
 				f.renderPixel(tmpx, tmpy, rgb)
 			}
 		}
 	}
 
+	// Render Sprite
 	for i := 0; i < len(ppu.OAMData); i += 4 {
 		tileIndex := uint16(ppu.OAMData[i+1])
 		tileX := uint(ppu.OAMData[i+3])
