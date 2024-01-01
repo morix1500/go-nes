@@ -105,6 +105,64 @@ func (f *Frame) Render(ppu *nes.PPU) {
 			}
 		}
 	}
+
+	for i := 0; i < len(ppu.OAMData); i += 4 {
+		tileIndex := uint16(ppu.OAMData[i+1])
+		tileX := uint(ppu.OAMData[i+3])
+		tileY := uint(ppu.OAMData[i])
+
+		var flipVertical, flipHorizontal bool
+		if ppu.OAMData[i+2]>>7&1 == 1 {
+			flipVertical = true
+		} else {
+			flipVertical = false
+		}
+
+		if ppu.OAMData[i+2]>>6&1 == 1 {
+			flipHorizontal = true
+		} else {
+			flipHorizontal = false
+		}
+		palletteIndex := ppu.OAMData[i+2] & 0b11
+		spritePallet := spritePallete(ppu, palletteIndex)
+
+		bank := ppu.ReadCTRLSpriteTableAddress()
+
+		tile := ppu.CharacterRom[(bank + tileIndex*16):(bank + tileIndex*16 + 15 + 1)]
+
+		for y := uint(0); y < 8; y++ {
+			upper := tile[y]
+			lower := tile[y+8]
+			for x := 7; x >= 0; x-- {
+				value := (1&lower)<<1 | (1 & upper)
+				upper = upper >> 1
+				lower = lower >> 1
+				var rgb color.RGBA
+				switch value {
+				case 0:
+					continue
+				case 1:
+					rgb = nes.Palletes[spritePallet[1]]
+				case 2:
+					rgb = nes.Palletes[spritePallet[2]]
+				case 3:
+					rgb = nes.Palletes[spritePallet[3]]
+				default:
+					panic("unknown value")
+				}
+
+				if flipHorizontal && flipVertical {
+					f.renderPixel(tileX+7-uint(x), tileY+7-y, rgb)
+				} else if flipHorizontal && !flipVertical {
+					f.renderPixel(tileX+7-uint(x), tileY+y, rgb)
+				} else if !flipHorizontal && flipVertical {
+					f.renderPixel(tileX+uint(x), tileY+7-y, rgb)
+				} else {
+					f.renderPixel(tileX+uint(x), tileY+y, rgb)
+				}
+			}
+		}
+	}
 }
 
 func backgroundPallette(ppu *nes.PPU, tileColumn uint, tileRow uint) []uint8 {
@@ -129,6 +187,17 @@ func backgroundPallette(ppu *nes.PPU, tileColumn uint, tileRow uint) []uint8 {
 
 	return []uint8{
 		ppu.PaletteTable[0],
+		ppu.PaletteTable[palletStart],
+		ppu.PaletteTable[palletStart+1],
+		ppu.PaletteTable[palletStart+2],
+	}
+}
+
+func spritePallete(ppu *nes.PPU, palleteIndex uint8) []uint8 {
+	palletStart := 0x11 + (palleteIndex * 4)
+
+	return []uint8{
+		0,
 		ppu.PaletteTable[palletStart],
 		ppu.PaletteTable[palletStart+1],
 		ppu.PaletteTable[palletStart+2],
