@@ -73,9 +73,10 @@ func (f *Frame) Render(ppu *nes.PPU) {
 
 	for i := 0; i <= 0x03c0; i++ {
 		tileAddr := uint16(ppu.VRAM[i])
-		tileX := uint(i % 32)
-		tileY := uint(i / 32)
+		tileColumn := uint(i % 32)
+		tileRow := uint(i / 32)
 		tile := ppu.CharacterRom[(bank + tileAddr*16):(bank + tileAddr*16 + 15 + 1)]
+		palette := backgroundPallette(ppu, tileColumn, tileRow)
 
 		for y := uint(0); y < 8; y++ {
 			upper := tile[y]
@@ -88,20 +89,48 @@ func (f *Frame) Render(ppu *nes.PPU) {
 				var rgb color.RGBA
 				switch value {
 				case 0:
-					rgb = nes.Palletes[0x01]
+					rgb = nes.Palletes[ppu.PaletteTable[0]]
 				case 1:
-					rgb = nes.Palletes[0x23]
+					rgb = nes.Palletes[palette[1]]
 				case 2:
-					rgb = nes.Palletes[0x27]
+					rgb = nes.Palletes[palette[2]]
 				case 3:
-					rgb = nes.Palletes[0x30]
+					rgb = nes.Palletes[palette[3]]
 				default:
 					panic("unknown value")
 				}
-				tmpx := 7 - x + (tileX * 8)
-				tmpy := tileY*8 + y
+				tmpx := 7 - x + (tileColumn * 8)
+				tmpy := tileRow*8 + y
 				f.renderPixel(tmpx, tmpy, rgb)
 			}
 		}
+	}
+}
+
+func backgroundPallette(ppu *nes.PPU, tileColumn uint, tileRow uint) []uint8 {
+	attrTableIdx := (tileRow/4)*8 + tileColumn/4
+	attrByte := ppu.VRAM[0x03c0+attrTableIdx]
+
+	var palletIndex uint8
+	palletIdx1 := tileColumn % 4 / 2
+	palletIdx2 := tileRow % 4 / 2
+
+	if palletIdx1 == 0 && palletIdx2 == 0 {
+		palletIndex = attrByte & 0b11
+	} else if palletIdx1 == 1 && palletIdx2 == 0 {
+		palletIndex = (attrByte >> 2) & 0b11
+	} else if palletIdx1 == 0 && palletIdx2 == 1 {
+		palletIndex = (attrByte >> 4) & 0b11
+	} else {
+		palletIndex = (attrByte >> 6) & 0b11
+	}
+
+	palletStart := 1 + (palletIndex * 4)
+
+	return []uint8{
+		ppu.PaletteTable[0],
+		ppu.PaletteTable[palletStart],
+		ppu.PaletteTable[palletStart+1],
+		ppu.PaletteTable[palletStart+2],
 	}
 }
