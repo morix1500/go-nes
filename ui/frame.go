@@ -17,14 +17,16 @@ const (
 )
 
 type Frame struct {
-	Front  *image.RGBA
-	Joypad *nes.Joypad
+	Front   *image.RGBA
+	Joypad1 *nes.Joypad
+	Joypad2 *nes.Joypad
 }
 
-func NewFrame(joypad *nes.Joypad) *Frame {
+func NewFrame(joypad1, joypad2 *nes.Joypad) *Frame {
 	return &Frame{
-		Front:  image.NewRGBA(image.Rect(0, 0, WIDTH, HEIGHT)),
-		Joypad: joypad,
+		Front:   image.NewRGBA(image.Rect(0, 0, WIDTH, HEIGHT)),
+		Joypad1: joypad1,
+		Joypad2: joypad2,
 	}
 }
 
@@ -56,7 +58,8 @@ func Init() *glfw.Window {
 
 func (f *Frame) OnKey(w *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {
 	if action == glfw.Press {
-		f.Joypad.ReadKeys(w)
+		f.Joypad1.ReadKeys(w)
+		f.Joypad2.ReadKeys(w)
 		if key == glfw.KeyEscape {
 			w.SetShouldClose(true)
 		}

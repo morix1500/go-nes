@@ -39,7 +39,7 @@ var (
 )
 
 func Run(cpu *nes.CPU, bus *nes.Bus, window *glfw.Window, program *Program) error {
-	frame := NewFrame(bus.JoyPad1)
+	frame := NewFrame(bus.JoyPad1, bus.JoyPad2)
 	VAO := CreateVAO()
 
 	window.SetKeyCallback(frame.OnKey)
