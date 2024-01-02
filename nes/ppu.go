@@ -282,6 +282,9 @@ func (p *PPU) ReadStatus() uint8 {
 func (p *PPU) Tick(cycles uint8) bool {
 	p.Cycles += uint(cycles)
 	if p.Cycles >= 341 {
+		if p.isSpriteZeroHit(p.Cycles) {
+			p.flagSpriteZeroHit = 1
+		}
 		p.Cycles -= 341
 		p.Scanline++
 		if p.Scanline == 241 {
@@ -294,11 +297,18 @@ func (p *PPU) Tick(cycles uint8) bool {
 
 		if p.Scanline >= 262 {
 			p.Scanline = 0
-			p.flagVblankStarted = 0
 			p.flagSpriteZeroHit = 0
+			p.flagVblankStarted = 0
 			p.NMIInterrupt = false
 			return true
 		}
 	}
 	return false
+}
+
+func (p *PPU) isSpriteZeroHit(cycles uint) bool {
+	x := uint(p.OAMData[3])
+	y := uint(p.OAMData[0])
+
+	return (y == uint(p.Scanline)) && x <= cycles && p.flagShowSprite == 1
 }
