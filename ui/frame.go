@@ -16,19 +16,6 @@ const (
 	SCALE  = 3
 )
 
-var (
-	keyMap = map[glfw.Key]uint8{
-		glfw.KeyA:     nes.JOYPAD_BUTTON_A,
-		glfw.KeyS:     nes.JOYPAD_BUTTON_B,
-		glfw.KeyEnter: nes.JOYPAD_START,
-		glfw.KeySpace: nes.JOYPAD_SELECT,
-		glfw.KeyUp:    nes.JOYPAD_UP,
-		glfw.KeyDown:  nes.JOYPAD_DOWN,
-		glfw.KeyLeft:  nes.JOYPAD_LEFT,
-		glfw.KeyRight: nes.JOYPAD_RIGHT,
-	}
-)
-
 type Frame struct {
 	Front  *image.RGBA
 	Joypad *nes.Joypad
@@ -69,15 +56,9 @@ func Init() *glfw.Window {
 
 func (f *Frame) OnKey(w *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {
 	if action == glfw.Press {
-		if _, exist := keyMap[key]; exist {
-			f.Joypad.Press(keyMap[key])
-		} else if key == glfw.KeyEscape {
+		f.Joypad.ReadKeys(w)
+		if key == glfw.KeyEscape {
 			w.SetShouldClose(true)
-		}
-	}
-	if action == glfw.Release {
-		if _, exist := keyMap[key]; exist {
-			f.Joypad.Release(keyMap[key])
 		}
 	}
 }
