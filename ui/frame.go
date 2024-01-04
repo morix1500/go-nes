@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"go-nes/nes"
 	"image"
 	"image/color"
@@ -57,9 +58,9 @@ func Init() *glfw.Window {
 }
 
 func (f *Frame) OnKey(w *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {
+	f.Joypad1.ReadKeys(w)
+	f.Joypad2.ReadKeys(w)
 	if action == glfw.Press {
-		f.Joypad1.ReadKeys(w)
-		f.Joypad2.ReadKeys(w)
 		if key == glfw.KeyEscape {
 			w.SetShouldClose(true)
 		}
@@ -71,42 +72,35 @@ func (f *Frame) renderPixel(x, y uint, c color.RGBA) {
 }
 
 func (f *Frame) Render(ppu *nes.PPU) {
-	bank := ppu.ReadCTRLBackGroundTableAddress()
+	scrollX := ppu.ReadPPUScrollX()
+	scrollY := ppu.ReadPPUScrollY()
 
-	// Render background
-	for i := 0; i <= 0x03c0; i++ {
-		tileAddr := uint16(ppu.VRAM[i])
-		tileColumn := uint(i % 32)
-		tileRow := uint(i / 32)
-		tile := ppu.CharacterRom[(bank + tileAddr*16):(bank + tileAddr*16 + 15 + 1)]
-		palette := backgroundPallette(ppu, tileColumn, tileRow)
+	var mainNameTable, secondNameTable []uint8
+	if ppu.Mirroring == nes.MIRROR_VERTICAL &&
+		(ppu.ReadCTRLNameTableAddress() == 0x2000 || ppu.ReadCTRLNameTableAddress() == 0x2800) {
+		mainNameTable = ppu.VRAM[0:0x400]
+		secondNameTable = ppu.VRAM[0x400:0x800]
+	} else if ppu.Mirroring == nes.MIRROR_VERTICAL &&
+		(ppu.ReadCTRLNameTableAddress() == 0x2400 || ppu.ReadCTRLNameTableAddress() == 0x2c00) {
+		mainNameTable = ppu.VRAM[0x400:0x800]
+		secondNameTable = ppu.VRAM[0:0x400]
+	} else if ppu.Mirroring == nes.MIRROR_HORIZONTAL &&
+		(ppu.ReadCTRLNameTableAddress() == 0x2000 || ppu.ReadCTRLNameTableAddress() == 0x2400) {
+		mainNameTable = ppu.VRAM[0:0x400]
+		secondNameTable = ppu.VRAM[0x400:0x800]
+	} else if ppu.Mirroring == nes.MIRROR_HORIZONTAL &&
+		(ppu.ReadCTRLNameTableAddress() == 0x2800 || ppu.ReadCTRLNameTableAddress() == 0x2c00) {
+		mainNameTable = ppu.VRAM[0x400:0x800]
+		secondNameTable = ppu.VRAM[0:0x400]
+	} else {
+		panic(fmt.Sprintf("not supported mirroring type: %d", ppu.Mirroring))
+	}
 
-		for y := uint(0); y < 8; y++ {
-			upper := tile[y]
-			lower := tile[y+8]
-
-			for x := 7; x >= 0; x-- {
-				value := (1&lower)<<1 | (1 & upper)
-				upper = upper >> 1
-				lower = lower >> 1
-				var rgb color.RGBA
-				switch value {
-				case 0:
-					rgb = nes.Palletes[ppu.PaletteTable[0]]
-				case 1:
-					rgb = nes.Palletes[palette[1]]
-				case 2:
-					rgb = nes.Palletes[palette[2]]
-				case 3:
-					rgb = nes.Palletes[palette[3]]
-				default:
-					panic("unknown value")
-				}
-				tmpx := (tileColumn * 8) + uint(x)
-				tmpy := tileRow*8 + y
-				f.renderPixel(tmpx, tmpy, rgb)
-			}
-		}
+	f.RenderNameTable(ppu, mainNameTable, *NewRect(uint(scrollX), uint(scrollY), WIDTH, HEIGHT), -int(scrollX), -int(scrollY))
+	if scrollX > 0 {
+		f.RenderNameTable(ppu, secondNameTable, *NewRect(0, 0, uint(scrollX), HEIGHT), WIDTH-int(scrollX), 0)
+	} else if scrollY > 0 {
+		f.RenderNameTable(ppu, secondNameTable, *NewRect(0, 0, WIDTH, uint(scrollY)), 0, HEIGHT-int(scrollY))
 	}
 
 	// Render Sprite
@@ -169,9 +163,9 @@ func (f *Frame) Render(ppu *nes.PPU) {
 	}
 }
 
-func backgroundPallette(ppu *nes.PPU, tileColumn uint, tileRow uint) []uint8 {
+func backgroundPallette(ppu *nes.PPU, attributeTable []uint8, tileColumn uint, tileRow uint) []uint8 {
 	attrTableIdx := (tileRow/4)*8 + tileColumn/4
-	attrByte := ppu.VRAM[0x03c0+attrTableIdx]
+	attrByte := attributeTable[attrTableIdx]
 
 	var palletIndex uint8
 	palletIdx1 := tileColumn % 4 / 2
@@ -205,5 +199,64 @@ func spritePallete(ppu *nes.PPU, palleteIndex uint8) []uint8 {
 		ppu.PaletteTable[palletStart],
 		ppu.PaletteTable[palletStart+1],
 		ppu.PaletteTable[palletStart+2],
+	}
+}
+
+type Rect struct {
+	x1 uint
+	y1 uint
+	x2 uint
+	y2 uint
+}
+
+func NewRect(x1, y1, x2, y2 uint) *Rect {
+	return &Rect{
+		x1: x1,
+		y1: y1,
+		x2: x2,
+		y2: y2,
+	}
+}
+
+func (f *Frame) RenderNameTable(ppu *nes.PPU, nametable []uint8, viewPort Rect, shiftX int, shiftY int) {
+	bank := ppu.ReadCTRLBackGroundTableAddress()
+	attributeTable := nametable[0x3c0:0x400]
+
+	for i := 0; i < 0x3c0; i++ {
+		tileColumn := uint(i % 32)
+		tileRow := uint(i / 32)
+		tileIndex := uint16(nametable[i])
+		tile := ppu.CharacterRom[(bank + tileIndex*16):(bank + tileIndex*16 + 15 + 1)]
+		palette := backgroundPallette(ppu, attributeTable, tileColumn, tileRow)
+
+		for y := uint(0); y < 8; y++ {
+			upper := tile[y]
+			lower := tile[y+8]
+
+			for x := 7; x >= 0; x-- {
+				value := (1&lower)<<1 | (1 & upper)
+				upper = upper >> 1
+				lower = lower >> 1
+				var rgb color.RGBA
+				switch value {
+				case 0:
+					rgb = nes.Palletes[ppu.PaletteTable[0]]
+				case 1:
+					rgb = nes.Palletes[palette[1]]
+				case 2:
+					rgb = nes.Palletes[palette[2]]
+				case 3:
+					rgb = nes.Palletes[palette[3]]
+				default:
+					panic("unknown value")
+				}
+				pixelX := tileColumn*8 + uint(x)
+				pixelY := tileRow*8 + y
+
+				if pixelX >= viewPort.x1 && pixelX < viewPort.x2 && pixelY >= viewPort.y1 && pixelY < viewPort.y2 {
+					f.renderPixel(uint(shiftX+int(pixelX)), uint(shiftY+int(pixelY)), rgb)
+				}
+			}
+		}
 	}
 }

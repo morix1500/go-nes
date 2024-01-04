@@ -50,6 +50,9 @@ type PPU struct {
 
 	// $2004 OAMDATA
 	OAMData [256]uint8
+
+	scrollX uint8
+	scrollY uint8
 }
 
 func NewPPU(characterRom []uint8, mirroring Mirroring) *PPU {
@@ -91,13 +94,23 @@ func (p *PPU) WriteToPPUScroll(value uint8) {
 		p.x = value & 0b0000_0111
 		p.t = (p.t & 0b1111_1111_1110_0000) | (uint16(value) >> 3)
 		p.w = 1
+		p.scrollX = value
 	} else {
 		// Y scroll
 		// 2回目の書き込みでは、値の0-2ビット目がtレジスタの12-14ビット目に入り、3-8ビット目がtレジスタの5-9ビット目に入る
 		p.t = (p.t & 0b1000_1111_1111_1111) | ((uint16(value) & 0b0000_0111) << 12)
 		p.t = (p.t & 0b1111_1100_0001_1111) | ((uint16(value) & 0b1111_1000) << 2)
 		p.w = 0
+		p.scrollY = value
 	}
+}
+
+func (p *PPU) ReadPPUScrollX() uint8 {
+	return p.scrollX
+}
+
+func (p *PPU) ReadPPUScrollY() uint8 {
+	return p.scrollY
 }
 
 func (p *PPU) WriteToPPUCTRL(value uint8) {

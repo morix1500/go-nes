@@ -142,7 +142,11 @@ func (b *Bus) ReadProgramRom(addr uint16) uint8 {
 func (b *Bus) Tick(cycles uint8) {
 	b.Cycles += uint(cycles)
 
-	if b.PPU.Tick(cycles * 3) {
+	nmiBefore := b.PPU.NMIInterrupt
+	b.PPU.Tick(cycles * 3)
+	nmiAfter := b.PPU.NMIInterrupt
+
+	if !nmiBefore && nmiAfter {
 		b.RenderFlag = true
 	}
 }
